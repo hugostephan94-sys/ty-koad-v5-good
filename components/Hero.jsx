@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Hero({
   onReserveClick,
@@ -10,13 +11,14 @@ export default function Hero({
   return (
     <section className="max-w-6xl mx-auto px-4 pt-6 md:pt-10">
       <div className="relative overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/5">
-        {/* Image naturelle : pleine largeur, hauteur auto */}
-        <img
+        {/* Image optimisée Next.js */}
+        <Image
           src={imageSrc}
           alt={imageAlt}
+          width={1600}         // taille de base (peut être ajustée)
+          height={900}
           className="block w-full h-auto"
-          loading="eager"
-          decoding="async"
+          priority             // image héro -> chargée en priorité
         />
 
         {/* Dégradés au-dessus de l'image */}
@@ -49,14 +51,14 @@ export default function Hero({
               {onReserveClick ? (
                 <button
                   onClick={onReserveClick}
-                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm hover:bg-emerald-800 transition shadow"
+                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition shadow"
                 >
                   Réserver en direct
                 </button>
               ) : (
                 <Link
                   href="/reserver"
-                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm hover:bg-emerald-800 transition shadow"
+                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition shadow"
                 >
                   Réserver en direct
                 </Link>
