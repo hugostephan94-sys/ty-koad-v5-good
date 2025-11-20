@@ -1,0 +1,25 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Gift {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique
+  chalet       String   // "C1" ou "C2"
+  planKey      String   // c2_week, c2_weekend, c1_2n...
+  amountCents  Int
+  extrasCSV    String
+  fromName     String
+  toName       String
+  buyerEmail   String?
+  toEmail      String?
+  message      String?
+  issuedAt     DateTime @default(now())
+  expiresAt    DateTime?
+  usedAt       DateTime?
+}
