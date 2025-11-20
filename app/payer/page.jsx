@@ -1,3 +1,4 @@
+// Fix Stripe / redeploy
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
