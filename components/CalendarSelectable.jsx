@@ -34,7 +34,7 @@ export default function CalendarSelectable({
   const [checkIn, setCheckIn]   = useState("");
   const [checkOut, setCheckOut] = useState("");
 
-  /* ==== Chargement des indispos iCal (on garde ton endpoint) ==== */
+  /* ==== Chargement des indispos iCal ==== */
   useEffect(()=>{
     let ignore=false;
     (async ()=>{
@@ -53,7 +53,7 @@ export default function CalendarSelectable({
     return ()=>{ ignore=true; };
   },[chaletId, when]);
 
-  /* ==== Calculs (inchangés) ==== */
+  /* ==== Calculs ==== */
   const nights = nightsBetween(checkIn, checkOut);
   const { total } = computeTotal(chalet, checkIn, checkOut);
   const minOk = nights === 0 ? false : nights >= chalet.minNights;
@@ -83,22 +83,49 @@ export default function CalendarSelectable({
   }
 
   function onPick(dayStr){
-    // déselection : recliquer sur l’arrivée
-    if (checkIn && !checkOut && dayStr === checkIn) { clearAll(); return; }
+    // pas de passé
     if (dayStr < todayISO) return;
-    if (busy.has(dayStr))  return;
 
-    if(!checkIn){
-      resetAfter(dayStr); return;
+    const isBusy = busy.has(dayStr);
+
+    // ───── Cas 1 : aucun check-in encore ─────
+    // On ne peut PAS démarrer un séjour sur un jour occupé
+    if (!checkIn) {
+      if (isBusy) return;
+      resetAfter(dayStr);
+      return;
     }
-    if(!checkOut){
-      if (dayStr <= checkIn) { resetAfter(dayStr); return; }
-      if (nightsBetween(checkIn, dayStr) < chalet.minNights) return;
-      if (isRangeBlocked(checkIn, dayStr)) return;
-      setCheckOut(dayStr); return;
+
+    // ───── Cas 2 : on a déjà un range complet (checkIn + checkOut) ─────
+    // On repart d'un nouveau check-in
+    if (checkOut) {
+      if (isBusy) return; // on ne commence pas sur un jour occupé
+      resetAfter(dayStr);
+      return;
     }
-    // si on a déjà un range, on repart d’un nouveau check-in
-    resetAfter(dayStr);
+
+    // ───── Cas 3 : on a un checkIn mais pas encore de checkOut ─────
+
+    // déselection : recliquer sur l’arrivée
+    if (dayStr === checkIn) {
+      clearAll();
+      return;
+    }
+
+    // si on clique avant ou le même jour -> on redéfinit simplement le checkIn
+    if (dayStr <= checkIn) {
+      if (isBusy) return; // on ne déplace pas l’arrivée sur un jour occupé
+      resetAfter(dayStr);
+      return;
+    }
+
+    // ICI : dayStr est un candidat checkOut (même si isBusy === true)
+    // → c'est ce qui permet d'avoir un séjour 24→25 alors que la nuit 25→26 est prise
+
+    if (nightsBetween(checkIn, dayStr) < chalet.minNights) return;
+    if (isRangeBlocked(checkIn, dayStr)) return;
+
+    setCheckOut(dayStr);
   }
 
   // surbrillance douce entre check-in et check-out
@@ -185,7 +212,7 @@ export default function CalendarSelectable({
         </button>
       </div>
 
-      {/* Grille des mois (cartes plus “punchy”) */}
+      {/* Grille des mois */}
       <div className="grid md:grid-cols-3 gap-4">
         {monthsArr.map((m,i)=> (
           <Month
@@ -204,7 +231,7 @@ export default function CalendarSelectable({
         ))}
       </div>
 
-      {/* Légende indispo bien visible */}
+      {/* Légende indispo */}
       <div className="mt-3 text-[11px] text-slate-600">
         <span
           className="inline-block align-middle h-2.5 w-5 mr-1 rounded"
@@ -251,14 +278,17 @@ function Month({ date, busy, today, checkIn, checkOut, minNights, onPick, inRang
             if (n < (minNights || 1)) tooShort = true;
           }
 
-          const disabled = isBusy || isPast || tooShort;
+          const canUseAsCheckout =
+            checkIn && !checkOut && key > checkIn;
+
+          const disabled =
+            (isBusy && !canUseAsCheckout) || isPast || tooShort;
 
           // styles de sélection
           const startSel = isStart(d);
           const endSel   = isEnd(d);
           const inSel    = inRange(d);
 
-          // badge "aujourd’hui"
           const isToday = key === iso(today);
 
           return (
@@ -288,10 +318,7 @@ function Month({ date, busy, today, checkIn, checkOut, minNights, onPick, inRang
                 : "Sélectionner"
               }
             >
-              {/* chiffre du jour */}
               {d.getDate()}
-
-              {/* petit point “aujourd’hui” */}
               {isToday && (
                 <span className="absolute -bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-600" />
               )}
