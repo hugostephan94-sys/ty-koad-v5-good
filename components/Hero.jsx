@@ -10,136 +10,89 @@ export default function Hero({
 }) {
   return (
     <section className="max-w-6xl mx-auto px-4 pt-6 md:pt-10">
-      <div className="relative overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/5">
-        {/* Image héro */}
+      {/* BANNIÈRE PHOTO */}
+      <div className="overflow-hidden rounded-3xl shadow-md border border-stone-200">
         <Image
           src={imageSrc}
           alt={imageAlt}
           width={1600}
           height={900}
-          className="block w-full h-64 sm:h-72 md:h-auto object-cover"
+          className="block w-full h-56 sm:h-64 md:h-80 object-cover"
           priority
         />
+      </div>
 
-        {/* Dégradés global */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/35 via-black/20 to-transparent" />
+      {/* TEXTE + BOUTONS */}
+      <div className="mt-5 md:mt-6 grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] gap-6 items-center">
+        <div>
+          <div className="flex flex-wrap gap-2 text-xs font-medium text-emerald-900">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-200">
+              Spa privatif
+            </span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-sky-100 border border-sky-200">
+              Laz · Centre Finistère
+            </span>
+          </div>
 
-        {/* --- VERSION MOBILE : petit bandeau en bas de la photo --- */}
-        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 md:hidden">
-          <div className="backdrop-blur-sm bg-black/45 rounded-2xl px-4 py-3 text-white text-sm shadow-lg">
-            <div className="flex flex-wrap gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-400/30 border border-emerald-300/50">
-                Spa privatif
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/10 border border-white/20">
-                Laz · Finistère
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/10 border border-white/20">
-                Lit king 180×200
-              </span>
-            </div>
+          <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
+            Escapade à Laz dans nos chalets cosy{" "}
+            <span className="text-emerald-800">& spa privatif</span>
+          </h1>
 
-            <h1 className="text-base sm:text-lg font-semibold leading-snug">
-              Escapade à Laz — chalets cosy &{" "}
-              <span className="text-emerald-300">spa privatif</span>
-            </h1>
+          <p className="mt-3 text-sm sm:text-base text-stone-600 max-w-xl">
+            Deux chalets tout équipés au calme, à 5 minutes du château de Trévarez :
+            <br className="hidden sm:inline" />
+            <span className="font-medium"> Ty-Koad Duo</span> avec spa privatif pour 2,
+            et <span className="font-medium">Ty-Koad</span> (2 chambres / 2 SDB) pour venir
+            en famille ou entre amis.
+          </p>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {onReserveClick ? (
-                <button
-                  onClick={onReserveClick}
-                  className="flex-1 inline-flex items-center justify-center px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
-                >
-                  Réserver en direct
-                </button>
-              ) : (
-                <Link
-                  href="/reserver"
-                  className="flex-1 inline-flex items-center justify-center px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
-                >
-                  Réserver en direct
-                </Link>
-              )}
+          <div className="mt-4 flex flex-wrap gap-3">
+            {onReserveClick ? (
+              <button
+                onClick={onReserveClick}
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm"
+              >
+                Réserver en direct
+              </button>
+            ) : (
+              <Link
+                href="/reserver"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm"
+              >
+                Réserver en direct
+              </Link>
+            )}
 
-              {onDiscoverClick ? (
-                <button
-                  onClick={onDiscoverClick}
-                  className="inline-flex items-center justify-center px-3 py-2 rounded-xl bg-white/95 text-stone-900 text-sm font-medium"
-                >
-                  Découvrir
-                </button>
-              ) : (
-                <Link
-                  href="/autour"
-                  className="inline-flex items-center justify-center px-3 py-2 rounded-xl bg-white/95 text-stone-900 text-sm font-medium"
-                >
-                  Découvrir
-                </Link>
-              )}
-            </div>
+            {onDiscoverClick ? (
+              <button
+                onClick={onDiscoverClick}
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-sm sm:text-base font-medium shadow-sm"
+              >
+                Découvrir les alentours
+              </button>
+            ) : (
+              <Link
+                href="/autour"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-sm sm:text-base font-medium shadow-sm"
+              >
+                Découvrir les alentours
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* --- VERSION DESKTOP : grande carte en verre par-dessus l’image --- */}
-        <div className="hidden md:block absolute left-6 top-6 max-w-xl">
-          <div className="backdrop-blur-sm bg-white/10 border border-white/15 rounded-2xl p-6 text-white shadow-2xl">
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className="px-2.5 py-1 rounded-full text-[12px] font-medium bg-emerald-400/20 border border-emerald-300/40">
-                Spa privatif
-              </span>
-              <span className="px-2.5 py-1 rounded-full text-[12px] font-medium bg-white/15 border border-white/20">
-                Laz · Finistère
-              </span>
-              <span className="px-2.5 py-1 rounded-full text-[12px] font-medium bg-white/15 border border-white/20">
-                Lit king 180×200
-              </span>
-            </div>
-
-            <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight">
-              Escapade à Laz — chalets cosy &{" "}
-              <span className="text-emerald-300">spa privatif</span>
-            </h1>
-
-            <p className="mt-3 text-sm text-stone-100/90 max-w-lg">
-              Deux chalets tout équipés au calme, à 5 minutes du château de
-              Trévarez : parfait pour une parenthèse à deux ou en famille.
-            </p>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              {onReserveClick ? (
-                <button
-                  onClick={onReserveClick}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm"
-                >
-                  Réserver en direct
-                </button>
-              ) : (
-                <Link
-                  href="/reserver"
-                  className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm"
-                >
-                  Réserver en direct
-                </Link>
-              )}
-
-              {onDiscoverClick ? (
-                <button
-                  onClick={onDiscoverClick}
-                  className="px-4 py-2.5 rounded-xl bg-white/95 text-stone-900 text-sm font-medium shadow-sm"
-                >
-                  Découvrir
-                </button>
-              ) : (
-                <Link
-                  href="/autour"
-                  className="px-4 py-2.5 rounded-xl bg-white/95 text-stone-900 text-sm font-medium shadow-sm"
-                >
-                  Découvrir
-                </Link>
-              )}
-            </div>
+        {/* Petit bloc “infos rapides” sur desktop, masqué sur mobile si tu veux épurer */}
+        <div className="hidden md:block bg-white rounded-3xl border border-stone-200 p-4 text-sm text-stone-700 shadow-sm">
+          <div className="font-semibold text-stone-900 mb-2">
+            En un coup d’œil
           </div>
+          <ul className="space-y-1.5 list-disc list-inside">
+            <li>Ty-Koad Duo : spa privatif pour 2, lit 180×200, TV + Netflix</li>
+            <li>Ty-Koad : 2 chambres, 2 salles d’eau avec WC, petit jardin</li>
+            <li>Arrivée autonome via boîte à clé, animaux autorisés</li>
+            <li>À 5 min du château de Trévarez, au cœur du Centre Finistère</li>
+          </ul>
         </div>
       </div>
     </section>
