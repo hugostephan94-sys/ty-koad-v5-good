@@ -70,6 +70,10 @@ function CheckoutShell() {
   const giftCode = search.get("giftCode") || "";
   const giftValueCents = Number(search.get("giftValue") || 0);
 
+  // 👉 nouvelles infos client passées dans l’URL /payer
+  const firstname = search.get("firstname") || "";
+  const email = search.get("email") || "";
+
   const [clientSecret, setClientSecret] = useState(null);
   const [fetchError, setFetchError] = useState("");
 
@@ -88,6 +92,7 @@ function CheckoutShell() {
             nights,
             giftCode: giftCode || undefined,
             giftValueCents: giftValueCents || undefined,
+            // tu peux aussi envoyer email / firstname côté Stripe si tu veux loguer
           }),
         });
 
@@ -130,6 +135,13 @@ function CheckoutShell() {
         amountCents={amountCents}
         depositCents={depositCents}
         giftCode={giftCode}
+        // 👉 on passe les infos client + séjour au composant de paiement
+        firstname={firstname}
+        email={email}
+        checkin={ci}
+        checkout={co}
+        chalet={chalet}
+        nights={nights}
       />
     </Elements>
   );
@@ -138,7 +150,17 @@ function CheckoutShell() {
 /**
  * Affiche PaymentElement et gère le bouton "Payer"
  */
-function CheckoutInner({ amountCents, depositCents, giftCode }) {
+function CheckoutInner({
+  amountCents,
+  depositCents,
+  giftCode,
+  firstname,
+  email,
+  checkin,
+  checkout,
+  chalet,
+  nights,
+}) {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -161,7 +183,7 @@ function CheckoutInner({ amountCents, depositCents, giftCode }) {
       return;
     }
 
-    // marquer le code cadeau utilisé
+    // marquer le code cadeau utilisé (si applicable)
     if (giftCode) {
       try {
         await fetch("/api/gift/consume", {
@@ -172,6 +194,26 @@ function CheckoutInner({ amountCents, depositCents, giftCode }) {
       } catch {
         // on ignore pour ne pas bloquer le client
       }
+    }
+
+    // 👉 NOUVEAU : envoyer les emails (client + admin)
+    try {
+      await fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          firstname,
+          checkin,
+          checkout,
+          chalet,
+          nights,
+          price: (amountCents / 100).toFixed(2),
+        }),
+      });
+    } catch (e) {
+      console.error("Erreur envoi email:", e);
+      // on ne bloque pas la confirmation si l'email échoue
     }
 
     setStatus("done");
