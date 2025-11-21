@@ -9,22 +9,22 @@ export default function Hero({
   imageAlt = "Ty-Koad Duo — spa privatif",
 }) {
   return (
-    <section className="max-w-6xl mx-auto px-4 pt-6 md:pt-10">
+    <section className="max-w-6xl mx-auto px-4 pt-6 md:pt-10 animate-fade-in-up">
       {/* BANNIÈRE PHOTO */}
-      <div className="overflow-hidden rounded-3xl shadow-md border border-stone-200">
+      <div className="group overflow-hidden rounded-3xl shadow-md border border-stone-200">
         <Image
           src={imageSrc}
           alt={imageAlt}
           width={1600}
           height={900}
-          className="block w-full h-56 sm:h-64 md:h-80 object-cover"
+          className="block w-full h-56 sm:h-64 md:h-80 object-cover transform group-hover:scale-105 duration-700 ease-out"
           priority
         />
       </div>
 
       {/* TEXTE + BOUTONS */}
       <div className="mt-5 md:mt-6 grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] gap-6 items-center">
-        <div>
+        <div className="animate-fade-in">
           <div className="flex flex-wrap gap-2 text-xs font-medium text-emerald-900">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-200">
               Spa privatif
@@ -51,14 +51,14 @@ export default function Hero({
             {onReserveClick ? (
               <button
                 onClick={onReserveClick}
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5"
               >
                 Réserver en direct
               </button>
             ) : (
               <Link
                 href="/reserver"
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5"
               >
                 Réserver en direct
               </Link>
@@ -67,14 +67,14 @@ export default function Hero({
             {onDiscoverClick ? (
               <button
                 onClick={onDiscoverClick}
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-sm sm:text-base font-medium shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-sm sm:text-base font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5"
               >
                 Découvrir les alentours
               </button>
             ) : (
               <Link
                 href="/autour"
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-sm sm:text-base font-medium shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-sm sm:text-base font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5"
               >
                 Découvrir les alentours
               </Link>
@@ -82,8 +82,7 @@ export default function Hero({
           </div>
         </div>
 
-        {/* Petit bloc “infos rapides” sur desktop, masqué sur mobile si tu veux épurer */}
-        <div className="hidden md:block bg-white rounded-3xl border border-stone-200 p-4 text-sm text-stone-700 shadow-sm">
+        <div className="hidden md:block bg-white rounded-3xl border border-stone-200 p-4 text-sm text-stone-700 shadow-sm animate-fade-in">
           <div className="font-semibold text-stone-900 mb-2">
             En un coup d’œil
           </div>

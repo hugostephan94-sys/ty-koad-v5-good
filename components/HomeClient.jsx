@@ -21,22 +21,32 @@ export default function HomeClient() {
     <div className="min-h-screen">
       <SiteHeader />
 
-      <main className="pb-12 md:pb-16">
+      <main className="pb-12 md:pb-16 space-y-8 md:space-y-12">
         {/* Hero avec bouton principal */}
-        <Hero onReserveClick={() => location.assign("/reserver")} />
+        <div className="animate-fade-in-up">
+          <Hero onReserveClick={() => location.assign("/reserver")} />
+        </div>
 
         {/* 3 cartes : Spa / Autour / Gourmets */}
-        <InspirationBlocks />
+        <div className="animate-fade-in-up" style={{ animationDelay: "0.12s" }}>
+          <InspirationBlocks />
+        </div>
 
         {/* 🔔 Bandeau chèque-cadeau */}
-        <div className="mt-4 mb-6 sm:mb-8">
+        <div
+          className="mt-2 sm:mt-4 mb-6 sm:mb-8 animate-fade-in-up"
+          style={{ animationDelay: "0.22s" }}
+        >
           <GiftBanner />
         </div>
 
         {/* Les 2 chalets avec carrousel + bouton “Réserver” */}
-        <section className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6 md:pt-8 pb-6 md:pb-10 grid gap-8 md:grid-cols-2 items-start">
+        <section
+          className="max-w-6xl mx-auto px-4 pt-2 sm:pt-4 md:pt-6 pb-6 md:pb-10 grid gap-8 md:grid-cols-2 items-start animate-fade-in-up"
+          style={{ animationDelay: "0.32s" }}
+        >
           {/* Ty-Koad Duo */}
-          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
+          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
             <PhotoCarousel
               images={photosDuo}
               heightClass="h-56 sm:h-64 md:h-80"
@@ -65,7 +75,7 @@ export default function HomeClient() {
           </article>
 
           {/* Ty-Koad 2 chambres */}
-          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
+          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
             <PhotoCarousel
               images={photosC1}
               heightClass="h-56 sm:h-64 md:h-80"
