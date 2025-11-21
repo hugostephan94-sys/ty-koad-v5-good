@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
           to-rose-50
           text-stone-900
           antialiased
+          pt-16
         "
       >
         <div
