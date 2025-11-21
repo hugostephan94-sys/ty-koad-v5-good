@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className="scroll-smooth">
       <body
         className="
           min-h-screen
@@ -16,9 +16,22 @@ export default function RootLayout({ children }) {
           via-sky-50
           to-rose-50
           text-stone-900
+          antialiased
         "
       >
-        {children}
+        <div
+          className="
+            max-w-6xl
+            mx-auto
+            px-4
+            sm:px-6
+            lg:px-8
+            py-4
+            sm:py-6
+          "
+        >
+          {children}
+        </div>
       </body>
     </html>
   );

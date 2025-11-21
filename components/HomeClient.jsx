@@ -18,67 +18,79 @@ export default function HomeClient() {
   }));
 
   return (
-    <div>
+    <div className="min-h-screen">
       <SiteHeader />
 
-      {/* Hero avec bouton principal */}
-      <Hero onReserveClick={() => location.assign("/reserver")} />
+      <main className="pb-12 md:pb-16">
+        {/* Hero avec bouton principal */}
+        <Hero onReserveClick={() => location.assign("/reserver")} />
 
-      {/* 3 cartes : Spa / Autour / Gourmets */}
-      <InspirationBlocks />
+        {/* 3 cartes : Spa / Autour / Gourmets */}
+        <InspirationBlocks />
 
-      {/* 🔔 Bandeau chèque-cadeau */}
-      <div className="mt-4 mb-4">
-        <GiftBanner />
-      </div>
+        {/* 🔔 Bandeau chèque-cadeau */}
+        <div className="mt-4 mb-6 sm:mb-8">
+          <GiftBanner />
+        </div>
 
-      {/* Les 2 chalets avec carrousel + bouton “Réserver” */}
-      <section className="max-w-6xl mx-auto px-4 py-12 md:py-16 grid md:grid-cols-2 gap-8 items-start">
-        {/* Ty-Koad Duo */}
-        <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
-          <PhotoCarousel images={photosDuo} heightClass="h-64 md:h-80" />
-          <div className="p-5">
-            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900">
-              Spa privatif
+        {/* Les 2 chalets avec carrousel + bouton “Réserver” */}
+        <section className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6 md:pt-8 pb-6 md:pb-10 grid gap-8 md:grid-cols-2 items-start">
+          {/* Ty-Koad Duo */}
+          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
+            <PhotoCarousel
+              images={photosDuo}
+              heightClass="h-56 sm:h-64 md:h-80"
+            />
+            <div className="p-5 sm:p-6">
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-emerald-100 text-emerald-900">
+                Spa privatif
+              </div>
+              <h3 className="mt-2 text-lg sm:text-xl font-semibold">
+                Ty-Koad Duo — spa privatif pour 2
+              </h3>
+              <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
+                <li>Lit 180 × 200 (king), grande TV + Netflix, internet</li>
+                <li>Accès direct au spa (jets, lumières), petit jardin</li>
+                <li>130 € (dim–jeu) • 150 € (ven–sam) • caution 500 €</li>
+              </ul>
+              <div className="mt-4">
+                <Link
+                  href="/reserver?tab=C2"
+                  className="inline-flex w-full sm:w-auto items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm transition"
+                >
+                  Réserver
+                </Link>
+              </div>
             </div>
-            <h3 className="mt-2 text-xl font-semibold">Ty-Koad Duo — spa privatif pour 2</h3>
-            <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
-              <li>Lit 180 × 200 (king), grande TV + Netflix, internet</li>
-              <li>Accès direct au spa (jets, lumières), petit jardin</li>
-              <li>130 € (dim-jeu) • 150 € (ven-sam) • caution 500 €</li>
-            </ul>
-            <div className="mt-4">
-              <Link
-                href="/reserver?tab=C2"
-                className="inline-flex px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
-              >
-                Réserver
-              </Link>
-            </div>
-          </div>
-        </article>
+          </article>
 
-        {/* Ty-Koad 2 chambres */}
-        <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
-          <PhotoCarousel images={photosC1} heightClass="h-64 md:h-80" />
-          <div className="p-5">
-            <h3 className="text-xl font-semibold">Ty-Koad — 2 chambres, 2 SDB</h3>
-            <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
-              <li>Cuisine équipée, salon cosy, TV + Netflix, internet</li>
-              <li>Petit jardin, arrivée autonome</li>
-              <li>70 € / nuit • min 2 nuits • caution 150 €</li>
-            </ul>
-            <div className="mt-4">
-              <Link
-                href="/reserver?tab=C1"
-                className="inline-flex px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
-              >
-                Réserver
-              </Link>
+          {/* Ty-Koad 2 chambres */}
+          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
+            <PhotoCarousel
+              images={photosC1}
+              heightClass="h-56 sm:h-64 md:h-80"
+            />
+            <div className="p-5 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold">
+                Ty-Koad — 2 chambres, 2 SDB
+              </h3>
+              <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
+                <li>Cuisine équipée, salon cosy, TV + Netflix, internet</li>
+                <li>Petit jardin, arrivée autonome</li>
+                <li>70 € / nuit • min 2 nuits • caution 150 €</li>
+              </ul>
+              <div className="mt-4">
+                <Link
+                  href="/reserver?tab=C1"
+                  className="inline-flex w-full sm:w-auto items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm transition"
+                >
+                  Réserver
+                </Link>
+              </div>
             </div>
-          </div>
-        </article>
-      </section>
+          </article>
+        </section>
+      </main>
     </div>
   );
 }

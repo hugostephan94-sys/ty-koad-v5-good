@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { Marcellus } from "next/font/google";
 
@@ -9,13 +10,27 @@ export default function Brand({ className = "" }) {
     <Link
       href="/"
       aria-label="Accueil — Les Chalets Ty-Koad"
-      className={`flex items-center gap-3 ${className}`}
+      className={`
+        group inline-flex items-center gap-2.5 sm:gap-3
+        rounded-full
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-50
+        transition
+        ${className}
+      `}
     >
-      <Triskell className="h-8 w-8 text-emerald-900" />
+      <Triskell className="h-7 w-7 sm:h-8 sm:w-8 text-emerald-900 transition-transform group-hover:scale-105" />
       <span
-        className={`${brand.className} text-lg md:text-xl leading-none tracking-wide`}
+        className={`
+          ${brand.className}
+          text-base sm:text-lg md:text-xl
+          leading-none tracking-wide
+          text-stone-900
+        `}
       >
-        Les Chalets <span className="text-emerald-900">Ty-Koad</span>
+        Les Chalets{" "}
+        <span className="text-emerald-900">
+          Ty-Koad
+        </span>
       </span>
     </Link>
   );

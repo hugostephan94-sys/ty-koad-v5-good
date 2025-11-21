@@ -34,69 +34,92 @@ const TREVAREZ_IMAGES = [
 
 export default function AutourPage() {
   return (
-    <div>
+    <>
       <SiteHeader />
 
-      {/* HERO */}
-      <section className="max-w-6xl mx-auto px-4 py-12 md:py-16">
-        <h1 className="text-3xl md:text-4xl font-bold">Que faire aux alentours</h1>
-        <p className="mt-3 text-stone-600">
-          Incontournables autour de Laz et du Centre Finistère — tous les temps sont des temps de Bretagne 🌿
-        </p>
-      </section>
+      <main className="pb-12 md:pb-16 space-y-10 sm:space-y-12 md:space-y-16">
+        {/* HERO */}
+        <section className="pt-4 sm:pt-6 md:pt-10">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
+            Que faire aux alentours
+          </h1>
+          <p className="mt-3 text-sm sm:text-base text-stone-600 max-w-2xl">
+            Incontournables autour de Laz et du Centre Finistère — tous les
+            temps sont des temps de Bretagne 🌿
+          </p>
+        </section>
 
-      {/* INCONTOURNABLE : CHÂTEAU DE TRÉVAREZ (5 min) */}
-      <section className="max-w-6xl mx-auto px-4 pb-10">
-        <div className="grid md:grid-cols-2 gap-6 items-stretch">
-          <ImageCarousel images={TREVAREZ_IMAGES} className="md:col-span-1" />
-          <div className="bg-white rounded-3xl border border-rose-200 p-6 md:p-8 md:col-span-1">
-            <div className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-900">
-              Incontournable — 5 minutes
+        {/* INCONTOURNABLE : CHÂTEAU DE TRÉVAREZ (5 min) */}
+        <section>
+          <div className="grid gap-6 lg:gap-8 lg:grid-cols-2 items-stretch">
+            <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white/40">
+              <ImageCarousel images={TREVAREZ_IMAGES} className="h-full" />
             </div>
-            <h2 className="mt-2 text-2xl font-semibold">Château de Trévarez</h2>
-            <p className="mt-2 text-stone-700 text-sm">
-              À deux pas des chalets : un domaine magnifique avec château, parc et jardins.
-              Expositions et animations toute l’année, décorations féeriques en saison.
-            </p>
-            <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
-              <li>Parc et jardins remarquables</li>
-              <li>Expositions & événements (selon période)</li>
-              <li>Superbe balade à faire en toute saison</li>
-            </ul>
-            <p className="mt-3 text-xs text-stone-500">
-              Astuce : vérifiez les horaires/programmations avant la visite.
-            </p>
+
+            <div className="bg-white rounded-3xl border border-rose-200 p-5 sm:p-6 md:p-8 flex flex-col justify-between">
+              <div>
+                <div className="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 text-rose-900">
+                  Incontournable — 5 minutes
+                </div>
+                <h2 className="mt-2 text-xl sm:text-2xl font-semibold">
+                  Château de Trévarez
+                </h2>
+                <p className="mt-2 text-sm sm:text-base text-stone-700">
+                  À deux pas des chalets : un domaine magnifique avec château,
+                  parc et jardins. Expositions et animations toute l’année,
+                  décorations féeriques en saison.
+                </p>
+                <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
+                  <li>Parc et jardins remarquables</li>
+                  <li>Expositions & événements (selon période)</li>
+                  <li>Superbe balade à faire en toute saison</li>
+                </ul>
+              </div>
+              <p className="mt-4 text-[11px] text-stone-500">
+                Astuce : pensez à vérifier les horaires et programmations sur le
+                site officiel avant votre visite.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* AUTRES IDÉES : 2 COLONNES */}
-      <section className="max-w-6xl mx-auto px-4 pb-12 grid md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-3xl border border-stone-200 p-6">
-          <h2 className="text-xl font-semibold">Nature & balades</h2>
-          <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
-            <li>Forêt de Huelgoat — chaos granitique • ~30 min</li>
-            <li>Monts d’Arrée — crêtes & landes • ~35 min</li>
-            <li>Vallée de l’Aulne — rando, vélo • ~20 min</li>
-            <li>Baie de Douarnenez — plage & pêche • ~45 min</li>
-          </ul>
-        </div>
+        {/* AUTRES IDÉES */}
+        <section className="space-y-6">
+          <h2 className="text-xl sm:text-2xl font-semibold">
+            Autres idées de sorties
+          </h2>
 
-        <div className="bg-white rounded-3xl border border-stone-200 p-6">
-          <h2 className="text-xl font-semibold">Patrimoine</h2>
-          <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
-            <li>Locronan — village de caractère • ~40 min</li>
-            <li>Quimper — cathédrale & musées • ~40 min</li>
-            <li>Douarnenez — ports & musée du bateau • ~45 min</li>
-            <li>Pont-Aven / Concarneau — remparts & ateliers • ~55 min</li>
-          </ul>
-        </div>
-      </section>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="bg-white rounded-3xl border border-stone-200 p-5 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold">
+                Nature & balades
+              </h3>
+              <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
+                <li>Forêt de Huelgoat — chaos granitique • ~30 min</li>
+                <li>Monts d’Arrée — crêtes & landes • ~35 min</li>
+                <li>Vallée de l’Aulne — rando, vélo • ~20 min</li>
+                <li>Baie de Douarnenez — plage & pêche • ~45 min</li>
+              </ul>
+            </div>
 
-      {/* Crédit/licence des photos */}
-      <section className="max-w-6xl mx-auto px-4 pb-16 text-[11px] text-stone-500">
-        Photos de Wikimedia Commons (licence CC BY-SA). L’attribution figure dans chaque légende.
-      </section>
-    </div>
+            <div className="bg-white rounded-3xl border border-stone-200 p-5 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold">Patrimoine</h3>
+              <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
+                <li>Locronan — village de caractère • ~40 min</li>
+                <li>Quimper — cathédrale & musées • ~40 min</li>
+                <li>Douarnenez — ports & musée du bateau • ~45 min</li>
+                <li>Pont-Aven / Concarneau — remparts & ateliers • ~55 min</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Crédit/licence des photos */}
+        <section className="pt-2 text-[11px] text-stone-500 leading-snug">
+          Photos de Wikimedia Commons (licence CC BY-SA). L’attribution figure
+          dans chaque légende du carrousel.
+        </section>
+      </main>
+    </>
   );
 }
