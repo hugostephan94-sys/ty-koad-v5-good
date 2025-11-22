@@ -177,10 +177,10 @@ export default function InfosPratiquesPage() {
                   </h3>
                   <ul className="mt-2 list-disc list-inside space-y-1">
                     <li>
-                      <strong>130 €</strong> la nuit (du dimanche au jeudi)
+                      <strong>110 €</strong> la nuit (du dimanche au jeudi)
                     </li>
                     <li>
-                      <strong>150 €</strong> la nuit (vendredi &amp; samedi)
+                      <strong>130 €</strong> la nuit (vendredi &amp; samedi)
                     </li>
                     <li>
                       <em>Minimum 1 nuit</em>

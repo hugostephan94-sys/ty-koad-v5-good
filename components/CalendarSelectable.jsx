@@ -118,7 +118,6 @@ export default function CalendarSelectable({
     const isBusy = busy.has(dayStr);
 
     // ───── Cas 1 : aucun check-in encore ─────
-    // On ne peut PAS démarrer un séjour sur un jour occupé
     if (!checkIn) {
       if (isBusy) return;
       resetAfter(dayStr);
@@ -126,30 +125,23 @@ export default function CalendarSelectable({
     }
 
     // ───── Cas 2 : on a déjà un range complet (checkIn + checkOut) ─────
-    // On repart d'un nouveau check-in
     if (checkOut) {
-      if (isBusy) return; // on ne commence pas sur un jour occupé
+      if (isBusy) return;
       resetAfter(dayStr);
       return;
     }
 
     // ───── Cas 3 : on a un checkIn mais pas encore de checkOut ─────
-
-    // déselection : recliquer sur l’arrivée
     if (dayStr === checkIn) {
       clearAll();
       return;
     }
 
-    // si on clique avant ou le même jour -> on redéfinit simplement le checkIn
     if (dayStr <= checkIn) {
-      if (isBusy) return; // on ne déplace pas l’arrivée sur un jour occupé
+      if (isBusy) return;
       resetAfter(dayStr);
       return;
     }
-
-    // ICI : dayStr est un candidat checkOut (même si isBusy === true)
-    // → c'est ce qui permet d'avoir un séjour 24→25 alors que la nuit 25→26 est prise
 
     if (nightsBetween(checkIn, dayStr) < chalet.minNights) return;
     if (isRangeBlocked(checkIn, dayStr)) return;
@@ -211,10 +203,10 @@ export default function CalendarSelectable({
           {chaletId === "C2" && (
             <>
               <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 border border-emerald-200">
-                Dim–jeu 130 €
+                Dim–jeu 110 €
               </span>
               <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-800 px-2 py-0.5 border border-amber-200">
-                Ven–sam 150 €
+                Ven–sam 130 €
               </span>
             </>
           )}

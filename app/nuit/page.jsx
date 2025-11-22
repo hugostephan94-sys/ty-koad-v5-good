@@ -39,7 +39,10 @@ export default function NuitPage() {
             {/* TY-KOAD DUO */}
             <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-sm">
               {/* Galerie DUO */}
-              <PhotoCarousel images={photosDuo} heightClass="h-56 sm:h-64 md:h-72" />
+              <PhotoCarousel
+                images={photosDuo}
+                heightClass="h-56 sm:h-64 md:h-72"
+              />
 
               <div className="p-5 sm:p-6 md:p-7">
                 <div className="flex items-center gap-2">
@@ -76,7 +79,7 @@ export default function NuitPage() {
                   <div className="font-medium">Infos clés</div>
                   <div className="mt-1">
                     <strong>Accès illimité au spa privatif</strong> •{" "}
-                    130 € (dim-jeu) • 150 € (ven-sam) —{" "}
+                    110 € (dim–jeu) • 130 € (ven–sam) —{" "}
                     <em>min. 1 nuit</em> — caution 500 €
                   </div>
                 </div>
@@ -95,7 +98,10 @@ export default function NuitPage() {
             {/* TY-KOAD 2 CH / 2 SDB */}
             <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-sm">
               {/* Galerie FAMILLE */}
-              <PhotoCarousel images={photosC1} heightClass="h-56 sm:h-64 md:h-72" />
+              <PhotoCarousel
+                images={photosC1}
+                heightClass="h-56 sm:h-64 md:h-72"
+              />
 
               <div className="p-5 sm:p-6 md:p-7">
                 <h2 className="text-xl sm:text-2xl font-semibold">
@@ -162,7 +168,7 @@ export default function NuitPage() {
                     Internet
                   </td>
                   <td className="p-3">
-                    130 € (dim-jeu) • 150 € (ven-sam) — min 1 nuit — caution
+                    110 € (dim–jeu) • 130 € (ven–sam) — min 1 nuit — caution
                     500 €
                   </td>
                 </tr>

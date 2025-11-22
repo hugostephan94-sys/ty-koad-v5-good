@@ -1,3 +1,4 @@
+import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 
 export default function TarifsPage() {
@@ -47,10 +48,10 @@ export default function TarifsPage() {
               </div>
               <div className="mt-3 space-y-1 text-sm">
                 <div>
-                  <span className="font-medium">130 €</span> (dim–jeu)
+                  <span className="font-medium">110 €</span> (dim–jeu)
                 </div>
                 <div>
-                  <span className="font-medium">150 €</span> (ven–sam)
+                  <span className="font-medium">130 €</span> (ven–sam)
                 </div>
                 <div>Minimum : 1 nuit</div>
                 <div>

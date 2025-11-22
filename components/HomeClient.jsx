@@ -61,7 +61,7 @@ export default function HomeClient() {
               <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
                 <li>Lit 180 × 200 (king), grande TV + Netflix, internet</li>
                 <li>Accès direct au spa (jets, lumières), petit jardin</li>
-                <li>130 € (dim–jeu) • 150 € (ven–sam) • caution 500 €</li>
+                <li>110 € (dim–jeu) • 130 € (ven–sam) • caution 500 €</li>
               </ul>
               <div className="mt-4">
                 <Link

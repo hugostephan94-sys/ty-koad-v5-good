@@ -15,8 +15,8 @@ const EXTRAS = [
 
 const GIFT_PLANS = {
   C2: [
-    { key: "c2_week",    label: "1 nuit semaine (dim-jeu)",       amount: 130, validity: "week" },
-    { key: "c2_weekend", label: "1 nuit week-end (ven-sam)",      amount: 150, validity: "weekend" },
+    { key: "c2_week",    label: "1 nuit semaine (dim-jeu)",  amount: 110, validity: "week" },
+    { key: "c2_weekend", label: "1 nuit week-end (ven-sam)", amount: 130, validity: "weekend" },
   ],
   C1: [
     { key: "c1_2n", label: "2 nuits (pack)", amount: 140, nights: 2 },
@@ -304,7 +304,7 @@ export default function CadeauPage() {
             <div className="bg-white/90 rounded-3xl border border-stone-200 p-5 sm:p-6 md:p-7 shadow-sm">
               <form
                 onSubmit={submit}
-                className="space-y-5 text-sm sm:text-[15px]"
+                className="space-y-5 text-sm sm:text[15px]"
               >
                 {/* Chalet */}
                 <div className="space-y-1">
