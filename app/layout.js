@@ -8,11 +8,11 @@ export const metadata = {
     title: "Chalets Ty-Koad — Spa privatif en Bretagne",
     description:
       "Séjournez dans nos chalets avec spa privatif et jardin à Laz, entre confort moderne et nature bretonne.",
-    url: "https://ty-koad-v5-site.vercel.app/", // tu changeras par ton .fr plus tard
+    url: "https://www.chalets-tykoad.fr/",
     siteName: "Chalets Ty-Koad",
     images: [
       {
-        url: "https://ty-koad-v5-site.vercel.app/images/og-tykoad.png", // ton image d’aperçu
+        url: "https://www.chalets-tykoad.fr/images/og-tykoad.png",
         width: 1200,
         height: 630,
       },
@@ -25,7 +25,7 @@ export const metadata = {
     title: "Chalets Ty-Koad — Spa privatif en Bretagne",
     description:
       "Chalets avec spa privatif et jardin à Laz, pour un séjour détente en Bretagne.",
-    images: ["https://ty-koad-v5-site.vercel.app/images/og-tykoad.png"],
+    images: ["https://www.chalets-tykoad.fr/images/og-tykoad.png"],
   },
 };
 
