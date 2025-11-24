@@ -1,5 +1,4 @@
 "use client";
-
 import { useRef, useState } from "react";
 import SiteHeader from "../../components/SiteHeader";
 
@@ -177,10 +176,21 @@ export default function ContactPage() {
             </div>
           </form>
 
-          <div className="text-xs sm:text-sm text-stone-600">
+          {/* Infos pratiques + téléphone */}
+          <div className="text-xs sm:text-sm text-stone-600 space-y-1">
             <div className="font-medium">Infos pratiques</div>
             <div>
               Nous répondons en général sous 24h (souvent bien plus vite ✉️).
+            </div>
+            <div>
+              Vous pouvez aussi nous joindre directement au{" "}
+              <a
+                href="tel:0695491124"
+                className="font-semibold text-emerald-800"
+              >
+                06&nbsp;95&nbsp;49&nbsp;11&nbsp;24
+              </a>
+              .
             </div>
           </div>
         </section>
