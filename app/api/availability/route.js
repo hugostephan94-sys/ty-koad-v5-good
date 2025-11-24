@@ -17,8 +17,7 @@ export async function GET(req) {
   let rawChalet = searchParams.get("chalet") || "C1";
   rawChalet = rawChalet.trim().toUpperCase(); // <- important
 
-  // Si tu veux, tu peux aussi gérer des alias ici :
-  // ex: DUO -> C2
+  // Alias possibles
   let chalet = rawChalet;
   if (rawChalet === "DUO" || rawChalet === "SPA") chalet = "C2";
 
@@ -40,9 +39,17 @@ export async function GET(req) {
   );
 
   const siteDays = new Set();
+
   for (const r of siteRes) {
-    const d1 = new Date(r.checkIn); d1.setHours(12, 0, 0, 0);
-    const d2 = new Date(r.checkOut); d2.setHours(12, 0, 0, 0);
+    // 🔹 NE BLOQUER QUE LES RÉSERVATIONS PAYÉES
+    // - si r.status existe et que ce n’est PAS "paid" → on ignore
+    if (r.status && r.status !== "paid") continue;
+
+    const d1 = new Date(r.checkIn);
+    d1.setHours(12, 0, 0, 0);
+    const d2 = new Date(r.checkOut);
+    d2.setHours(12, 0, 0, 0);
+
     for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
       siteDays.add(isoDay(d));
     }
@@ -54,13 +61,17 @@ export async function GET(req) {
 
   // 4) Fenêtrage (from/to) pour limiter la réponse
   const start = from ? new Date(from) : new Date();
-  const end = to ? new Date(to) : new Date(Date.now() + 365 * 24 * 3600 * 1000);
+  const end = to
+    ? new Date(to)
+    : new Date(Date.now() + 365 * 24 * 3600 * 1000);
+
   start.setHours(12, 0, 0, 0);
   end.setHours(12, 0, 0, 0);
 
   const bookedDates = Array.from(merged)
     .filter((s) => {
-      const dt = new Date(s); dt.setHours(12, 0, 0, 0);
+      const dt = new Date(s);
+      dt.setHours(12, 0, 0, 0);
       return dt >= start && dt <= end;
     })
     .sort();
@@ -73,7 +84,7 @@ export async function GET(req) {
   return NextResponse.json({
     chalet,
     bookedDates,
-    ranges: ext.ranges,       // [{start:"YYYY-MM-DD", end:"YYYY-MM-DD"}]
+    ranges: ext.ranges, // [{start:"YYYY-MM-DD", end:"YYYY-MM-DD"}]
     updatedAt: ext.updatedAt, // ISO string
     nextRefreshInMin: 15,
   });
