@@ -1,3 +1,4 @@
+// app/api/send-confirmation/route.js
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
@@ -5,50 +6,79 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
   try {
-    const data = await req.json();
-
+    const body = await req.json();
     const {
       email,
       firstname,
       checkin,
       checkout,
       chalet,
+      nights,
       price,
-    } = data;
+    } = body;
 
-    // Email client
+    if (!email || !checkin || !checkout || !chalet) {
+      return NextResponse.json(
+        { error: "Données de réservation manquantes." },
+        { status: 400 }
+      );
+    }
+
+    const chaletLabel =
+      chalet === "C2"
+        ? "Ty-Koad Duo — spa privatif"
+        : "Ty-Koad — 2 chambres / 2 SDB";
+
+    // 1) Mail pour le client
     await resend.emails.send({
-      from: "Ty-Koad <reservation@tykoad.fr>",
+      from: "Les Chalets Ty-Koad <onboarding@resend.dev>",
       to: email,
-      subject: "Votre réservation au chalet Ty-Koad",
-      html: `
-        <h2>Bonjour ${firstname},</h2>
-        <p>Merci pour votre réservation au <strong>Chalet ${chalet}</strong>.</p>
-        <p>📅 Séjour : <strong>${checkin}</strong> → <strong>${checkout}</strong></p>
-        <p>💳 Montant payé : <strong>${price} €</strong></p>
-        <br />
-        <p>Nous restons disponibles pour toute question.</p>
-        <p>À très bientôt,<br>Hugo & Nina – Chalets Ty-Koad</p>
-      `,
+      subject: "Confirmation de votre réservation – Les Chalets Ty-Koad",
+      text: [
+        firstname ? `Bonjour ${firstname},` : "Bonjour,",
+        "",
+        "Merci pour votre réservation aux Chalets Ty-Koad 💚",
+        "",
+        `• Chalet : ${chaletLabel}`,
+        `• Séjour : du ${checkin} au ${checkout} (${nights} nuit${
+          nights > 1 ? "s" : ""
+        })`,
+        price ? `• Montant réglé : ${price} €` : "",
+        "",
+        "Nous vous contacterons rapidement avec toutes les infos pratiques (arrivée, spa, options gourmandes…).",
+        "",
+        "À très bientôt à Laz !",
+        "Hugo & Nina – Les Chalets Ty-Koad",
+      ]
+        .filter(Boolean)
+        .join("\n"),
     });
 
-    // Email admin (copie)
+    // 2) Copie pour toi
     await resend.emails.send({
-      from: "Ty-Koad <reservation@tykoad.fr>",
-      to: process.env.ADMIN_EMAIL.split(";"),
-      subject: "Nouvelle réservation – Ty-Koad",
-      html: `
-        <h2>Nouvelle réservation confirmée</h2>
-        <p><strong>${firstname}</strong> a réservé le chalet <strong>${chalet}</strong>.</p>
-        <p>📅 Dates : <strong>${checkin}</strong> → <strong>${checkout}</strong></p>
-        <p>💶 Montant : <strong>${price} €</strong></p>
-        <p>📧 Email client : ${email}</p>
-      `,
+      from: "Les Chalets Ty-Koad <onboarding@resend.dev>",
+      to: "hugostephan94@gmail.com",
+      subject: "✅ Nouvelle réservation confirmée – Ty-Koad",
+      text: [
+        "Nouvelle réservation confirmée via le site :",
+        "",
+        `Client : ${firstname || ""} (${email})`,
+        `Chalet : ${chaletLabel}`,
+        `Séjour : du ${checkin} au ${checkout} (${nights} nuit${
+          nights > 1 ? "s" : ""
+        })`,
+        price ? `Montant payé : ${price} €` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
     });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("Erreur /api/send-confirmation:", e);
+    return NextResponse.json(
+      { error: "Erreur à l’envoi des e-mails." },
+      { status: 500 }
+    );
   }
 }
