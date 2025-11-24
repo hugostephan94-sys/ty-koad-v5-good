@@ -70,9 +70,9 @@ function CheckoutShell() {
   const giftCode = search.get("giftCode") || "";
   const giftValueCents = Number(search.get("giftValue") || 0);
 
-  // 👉 nouvelles infos client passées dans l’URL /payer
+  // infos client éventuellement passées dans l’URL (pour plus tard)
   const firstname = search.get("firstname") || "";
-  const email = search.get("email") || "";
+  const emailFromUrl = search.get("email") || "";
 
   const [clientSecret, setClientSecret] = useState(null);
   const [fetchError, setFetchError] = useState("");
@@ -92,7 +92,6 @@ function CheckoutShell() {
             nights,
             giftCode: giftCode || undefined,
             giftValueCents: giftValueCents || undefined,
-            // tu peux aussi envoyer email / firstname côté Stripe si tu veux loguer
           }),
         });
 
@@ -135,9 +134,9 @@ function CheckoutShell() {
         amountCents={amountCents}
         depositCents={depositCents}
         giftCode={giftCode}
-        // 👉 on passe les infos client + séjour au composant de paiement
         firstname={firstname}
-        email={email}
+        // email initial (souvent vide, mais au cas où)
+        initialEmail={emailFromUrl}
         checkin={ci}
         checkout={co}
         chalet={chalet}
@@ -155,7 +154,7 @@ function CheckoutInner({
   depositCents,
   giftCode,
   firstname,
-  email,
+  initialEmail,
   checkin,
   checkout,
   chalet,
@@ -166,15 +165,31 @@ function CheckoutInner({
 
   const [status, setStatus] = useState("ready"); // ready | paying | done | error
   const [error, setError] = useState("");
+  const [email, setEmail] = useState(initialEmail || "");
 
   async function pay() {
     if (!stripe || !elements) return;
+
+    if (!email.trim()) {
+      setError("Merci de renseigner votre adresse e-mail.");
+      return;
+    }
+
     setStatus("paying");
     setError("");
 
     const { error: err } = await stripe.confirmPayment({
       elements,
       redirect: "if_required",
+      // on ajoute les infos de facturation pour Stripe
+      confirmParams: {
+        payment_method_data: {
+          billing_details: {
+            email: email.trim(),
+            name: firstname || undefined,
+          },
+        },
+      },
     });
 
     if (err) {
@@ -196,13 +211,13 @@ function CheckoutInner({
       }
     }
 
-    // 👉 NOUVEAU : envoyer les emails (client + admin)
+    // envoi des emails (client + admin)
     try {
       await fetch("/api/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
+          email: email.trim(),
           firstname,
           checkin,
           checkout,
@@ -213,7 +228,6 @@ function CheckoutInner({
       });
     } catch (e) {
       console.error("Erreur envoi email:", e);
-      // on ne bloque pas la confirmation si l'email échoue
     }
 
     setStatus("done");
@@ -230,6 +244,21 @@ function CheckoutInner({
         <div className="text-[11px] sm:text-xs">
           Caution (séparée, via lien dédié) : {eur(depositCents)}
         </div>
+      </div>
+
+      {/* Champ e-mail obligatoire */}
+      <div className="mb-4">
+        <label className="block text-xs sm:text-sm text-stone-700 mb-1">
+          Adresse e-mail pour la confirmation de réservation
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="ex : prenom.nom@email.com"
+          required
+        />
       </div>
 
       <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4 mb-4 text-[11px] sm:text-xs text-stone-600">
