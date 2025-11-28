@@ -25,14 +25,15 @@ model Gift {
 }
 
 model Reservation {
-  id        Int      @id @default(autoincrement())
-  chalet    String   // "C1" ou "C2"
-  ci        DateTime // check-in
-  co        DateTime // check-out
-  firstname String?  // prénom / nom
-  email     String?  // email du client
-  adults    Int      @default(1)
-  children  Int      @default(0)
-  status    String   @default("confirmed")
-  createdAt DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  chalet          String   // "C1" ou "C2"
+  ci              DateTime // check-in
+  co              DateTime // check-out
+  firstname       String?  // prénom / nom
+  email           String?  // email du client
+  adults          Int      @default(1)
+  children        Int      @default(0)
+  status          String   @default("confirmed")
+  paymentIntentId String?  @unique   // ⬅️ NOUVEAU, pour Stripe
+  createdAt       DateTime @default(now())
 }
