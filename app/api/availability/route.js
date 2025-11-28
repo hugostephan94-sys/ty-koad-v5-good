@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 function isoDay(d) {
   const x = new Date(d);
   x.setHours(12, 0, 0, 0);
-  return x.toISOString().slice(0, 10);
+  return x.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
 export async function GET(req) {
@@ -27,10 +27,18 @@ export async function GET(req) {
   console.log("[availability] chalet =", chalet, "(raw =", rawChalet + ")");
 
   // 1) Flux externes (Airbnb/Booking/Abritel)
-  const ext = await fetchExternalIcal(chalet); // => { bookedDates: [...], ranges: [...], updatedAt }
+  const ext = await fetchExternalIcal(chalet); 
+  // => { bookedDates: [...], ranges: [...], updatedAt }
 
-  // 2) Réservations faites sur TON site
-  const siteRes = await loadSiteReservations(chalet); // [{ checkIn, checkOut, status, ... }]
+  // 2) Réservations faites sur TON site (DB via loadSiteReservations)
+  let siteRes = [];
+  try {
+    siteRes = await loadSiteReservations(chalet); // [{ checkIn, checkOut, status, ... }]
+  } catch (e) {
+    console.error("[availability] erreur loadSiteReservations", e);
+    siteRes = [];
+  }
+
   console.log(
     "[availability] siteRes count =",
     siteRes.length,
@@ -38,13 +46,11 @@ export async function GET(req) {
     (ext.bookedDates || []).length
   );
 
+  // 3) On explose les nuits des résas site
   const siteDays = new Set();
 
   for (const r of siteRes) {
-    // 🔹 NE BLOQUER QUE LES RÉSERVATIONS PAYÉES
-    // - si r.status existe et que ce n’est PAS "paid" → on ignore
-    if (r.status && r.status !== "paid") continue;
-
+    // loadSiteReservations retire déjà les "cancelled"
     const d1 = new Date(r.checkIn);
     d1.setHours(12, 0, 0, 0);
     const d2 = new Date(r.checkOut);
@@ -55,11 +61,11 @@ export async function GET(req) {
     }
   }
 
-  // 3) Fusion externes + site
+  // 4) Fusion externes + site
   const merged = new Set(ext.bookedDates || []);
   for (const d of siteDays) merged.add(d);
 
-  // 4) Fenêtrage (from/to) pour limiter la réponse
+  // 5) Fenêtrage (from/to) pour limiter la réponse
   const start = from ? new Date(from) : new Date();
   const end = to
     ? new Date(to)
@@ -84,8 +90,8 @@ export async function GET(req) {
   return NextResponse.json({
     chalet,
     bookedDates,
-    ranges: ext.ranges, // [{start:"YYYY-MM-DD", end:"YYYY-MM-DD"}]
-    updatedAt: ext.updatedAt, // ISO string
+    ranges: ext.ranges,      // [{start:"YYYY-MM-DD", end:"YYYY-MM-DD"}]
+    updatedAt: ext.updatedAt,
     nextRefreshInMin: 15,
   });
 }
