@@ -1,6 +1,16 @@
 // app/utils/server-db.js
 import prisma from "../../lib/db";
 
+// petit helper pour sécuriser les dates
+function toDateOrNull(value) {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  return d;
+}
+
 /**
  * Liste toutes les réservations (DB Prisma)
  */
@@ -13,7 +23,6 @@ export async function listReservations() {
 
 /**
  * Sauvegarde une réservation dans la DB
- * (à appeler quand le paiement Stripe est confirmé)
  */
 export async function saveReservation(resa) {
   const {
@@ -27,11 +36,25 @@ export async function saveReservation(resa) {
     status = "confirmed",
   } = resa;
 
+  const ciDate = toDateOrNull(ci);
+  const coDate = toDateOrNull(co);
+
+  // 🔴 dates invalides → on log et on sort sans planter
+  if (!ciDate || !coDate) {
+    console.warn("[saveReservation] ci/co invalides, réservation ignorée", {
+      chalet,
+      ci,
+      co,
+      status,
+    });
+    return null;
+  }
+
   const created = await prisma.reservation.create({
     data: {
       chalet,
-      ci: new Date(ci),
-      co: new Date(co),
+      ci: ciDate,
+      co: coDate,
       firstname: firstname || null,
       email: email || null,
       adults,
@@ -54,7 +77,6 @@ export async function upsertReservationByPI(_payload) {
 
 /**
  * Config iCal : on lit juste les variables d’environnement
- * (C1_ICAL_BOOKING, C2_ICAL_BOOKING, etc.)
  */
 export async function getConfig() {
   return {
