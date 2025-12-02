@@ -240,8 +240,7 @@ export default function BookingWidget({
                 style: "currency",
                 currency: "EUR",
               })}
-            </b>{" "}
-            • caution {chalet.deposit} €
+            </b>
           </>
         ) : (
           "Choisissez vos dates pour voir le total."
@@ -272,7 +271,6 @@ export default function BookingWidget({
             co,
             nights: String(nights),
             amount: String(total),
-            deposit: String(chalet.deposit),
             adults: String(ad),
           }).toString();
           window.location.assign(`/payer?${q}`);

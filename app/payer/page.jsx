@@ -61,8 +61,8 @@ export default function PayerPage() {
 function CheckoutShell() {
   const search = useSearchParams();
 
-  const amountCents = Math.round(Number(search.get("amount") || 0) * 100); // € -> cents
-  const depositCents = Math.round(Number(search.get("deposit") || 0) * 100);
+  // montant passé en € dans l’URL => on repasse en centimes
+  const amountCents = Math.round(Number(search.get("amount") || 0) * 100);
   const chalet = search.get("chalet");
   const ci = search.get("ci");
   const co = search.get("co");
@@ -85,7 +85,6 @@ function CheckoutShell() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             amountCents,
-            depositCents,
             chalet,
             ci,
             co,
@@ -132,7 +131,6 @@ function CheckoutShell() {
     <Elements stripe={stripePromise} options={{ clientSecret }}>
       <CheckoutInner
         amountCents={amountCents}
-        depositCents={depositCents}
         giftCode={giftCode}
         firstname={firstname}
         // email initial (souvent vide, mais au cas où)
@@ -151,7 +149,6 @@ function CheckoutShell() {
  */
 function CheckoutInner({
   amountCents,
-  depositCents,
   giftCode,
   firstname,
   initialEmail,
@@ -240,9 +237,6 @@ function CheckoutInner({
           Total à payer :{" "}
           <b className="text-stone-900">{eur(amountCents)}</b>
           {giftCode && " (chèque cadeau appliqué)"}
-        </div>
-        <div className="text-[11px] sm:text-xs">
-          Caution (séparée, via lien dédié) : {eur(depositCents)}
         </div>
       </div>
 

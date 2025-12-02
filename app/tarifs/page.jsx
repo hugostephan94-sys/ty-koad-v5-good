@@ -33,9 +33,6 @@ export default function TarifsPage() {
                   <span className="font-medium">70 €</span> / nuit
                 </div>
                 <div>Séjour minimum : 2 nuits</div>
-                <div>
-                  Caution : <span className="font-medium">150 €</span>
-                </div>
               </div>
             </div>
 
@@ -54,9 +51,6 @@ export default function TarifsPage() {
                   <span className="font-medium">130 €</span> (ven–sam)
                 </div>
                 <div>Minimum : 1 nuit</div>
-                <div>
-                  Caution : <span className="font-medium">500 €</span>
-                </div>
               </div>
             </div>
           </div>
@@ -69,8 +63,8 @@ export default function TarifsPage() {
             <ul className="mt-3 list-disc list-inside space-y-1 text-sm text-stone-700">
               <li>Animaux autorisés (tenus propres & respectueux des lieux).</li>
               <li>
-                Frais de ménage uniquement si le logement n’est pas rendu propre
-                ou rangé : des frais peuvent alors être retenus sur la caution.
+                Frais de ménage : si le logement n’est pas rendu propre et rangé,
+                des frais supplémentaires pourront être facturés.
               </li>
               <li>
                 Annulation / arrhes : à préciser selon vos règles (ex. non

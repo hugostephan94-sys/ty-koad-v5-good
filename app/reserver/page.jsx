@@ -131,13 +131,13 @@ function ReserverInner() {
     const { checkIn, checkOut, nights, total } = state;
     const net = Math.max(0, (total || 0) - discountCents);
 
+    // net est en centimes -> on passe le montant en euros dans l’URL
     const q = new URLSearchParams({
       chalet: chalet.id,
       ci: checkIn,
       co: checkOut,
       nights: String(nights),
-      amount: String((net / 100) * 100), // total en €
-      deposit: String(chalet.deposit),
+      amount: String(net / 100), // montant en € pour la page /payer
       adults: String(adults),
       children: String(children),
       ...(gift
@@ -324,8 +324,7 @@ function ReserverInner() {
                     </>
                   ) : (
                     <b>{eur(state.total)}</b>
-                  )}{" "}
-                  — caution {eur(CHALETS[tab].deposit)}
+                  )}
                 </>
               ) : (
                 "Sélectionnez vos dates pour voir le total."

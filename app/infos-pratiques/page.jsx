@@ -122,8 +122,8 @@ export default function InfosPratiquesPage() {
                 </li>
                 <li>
                   <strong>Frais de ménage</strong> : uniquement si le chalet est
-                  rendu sale ou non rangé — des frais pourront alors être
-                  retenus sur la caution.
+                  rendu sale ou non rangé — des frais supplémentaires pourront
+                  alors être facturés.
                 </li>
               </ul>
             </div>
@@ -159,8 +159,8 @@ export default function InfosPratiquesPage() {
                 </li>
                 <li>
                   En cas de non-respect des règles entraînant un changement
-                  d’eau ou une intervention, des frais pourront être retenus sur
-                  la caution.
+                  d’eau ou une intervention, des frais supplémentaires pourront
+                  être facturés.
                 </li>
               </ul>
             </div>
@@ -186,10 +186,6 @@ export default function InfosPratiquesPage() {
                       <em>Minimum 1 nuit</em>
                     </li>
                     <li>
-                      <strong>Caution :</strong> 500 € (pré-autorisation
-                      bancaire)
-                    </li>
-                    <li>
                       Accès illimité au spa privatif pendant votre séjour
                     </li>
                   </ul>
@@ -204,10 +200,6 @@ export default function InfosPratiquesPage() {
                     </li>
                     <li>
                       <em>Minimum 2 nuits</em>
-                    </li>
-                    <li>
-                      <strong>Caution :</strong> 150 € (pré-autorisation
-                      bancaire)
                     </li>
                     <li>
                       Idéal en famille ou entre amis (jusqu’à 4 personnes)

@@ -28,7 +28,10 @@ export default function HomeClient() {
         </div>
 
         {/* 3 cartes : Spa / Autour / Gourmets */}
-        <div className="animate-fade-in-up" style={{ animationDelay: "0.12s" }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: "0.12s" }}
+        >
           <InspirationBlocks />
         </div>
 
@@ -61,7 +64,7 @@ export default function HomeClient() {
               <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
                 <li>Lit 180 × 200 (king), grande TV + Netflix, internet</li>
                 <li>Accès direct au spa (jets, lumières), petit jardin</li>
-                <li>110 € (dim–jeu) • 130 € (ven–sam) • caution 500 €</li>
+                <li>110 € (dim–jeu) • 130 € (ven–sam)</li>
               </ul>
               <div className="mt-4">
                 <Link
@@ -87,7 +90,7 @@ export default function HomeClient() {
               <ul className="mt-2 text-sm text-stone-600 list-disc list-inside space-y-1">
                 <li>Cuisine équipée, salon cosy, TV + Netflix, internet</li>
                 <li>Petit jardin, arrivée autonome</li>
-                <li>70 € / nuit • min 2 nuits • caution 150 €</li>
+                <li>70 € / nuit • min 2 nuits</li>
               </ul>
               <div className="mt-4">
                 <Link

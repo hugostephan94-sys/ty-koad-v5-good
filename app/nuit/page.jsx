@@ -59,8 +59,8 @@ export default function NuitPage() {
 
                 <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
                   <li>
-                    <strong>Spa privatif</strong> : jets massants &
-                    lumières d’ambiance
+                    <strong>Spa privatif</strong> : jets massants & lumières
+                    d’ambiance
                   </li>
                   <li>
                     Lit <strong>180 × 200 cm (king)</strong>, ambiance cocon
@@ -78,15 +78,14 @@ export default function NuitPage() {
                 <div className="mt-4 p-4 rounded-2xl bg-stone-50 border border-stone-200 text-sm">
                   <div className="font-medium">Infos clés</div>
                   <div className="mt-1">
-                    <strong>Accès illimité au spa privatif</strong> •{" "}
-                    110 € (dim–jeu) • 130 € (ven–sam) —{" "}
-                    <em>min. 1 nuit</em> — caution 500 €
+                    <strong>Accès illimité au spa privatif</strong> • 110 € (dim–jeu) • 130 € (ven–sam) —{" "}
+                    <em>min. 1 nuit</em>
                   </div>
                 </div>
 
                 <div className="mt-5">
                   <Link
-                    href="/reserver"
+                    href="/reserver?tab=C2"
                     className="inline-flex w-full sm:w-auto items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm transition"
                   >
                     Réserver le Duo
@@ -125,13 +124,13 @@ export default function NuitPage() {
                 <div className="mt-4 p-4 rounded-2xl bg-stone-50 border border-stone-200 text-sm">
                   <div className="font-medium">Infos clés</div>
                   <div className="mt-1">
-                    70 € / nuit — <em>min. 2 nuits</em> — caution 150 €
+                    70 € / nuit — <em>min. 2 nuits</em>
                   </div>
                 </div>
 
                 <div className="mt-5">
                   <Link
-                    href="/reserver"
+                    href="/reserver?tab=C1"
                     className="inline-flex w-full sm:w-auto items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm transition"
                   >
                     Réserver Ty-Koad
@@ -168,22 +167,19 @@ export default function NuitPage() {
                     Internet
                   </td>
                   <td className="p-3">
-                    110 € (dim–jeu) • 130 € (ven–sam) — min 1 nuit — caution
-                    500 €
+                    110 € (dim–jeu) • 130 € (ven–sam) — min 1 nuit
                   </td>
                 </tr>
                 <tr className="border-t">
                   <td className="p-3 font-medium">Ty-Koad</td>
-                  <td className="p-3">
-                    Jusqu’à 4 (selon configuration)
-                  </td>
+                  <td className="p-3">Jusqu’à 4 (selon configuration)</td>
                   <td className="p-3">2 chambres • 2 SDB</td>
                   <td className="p-3">
                     2 chambres avec{" "}
                     <strong>salle d’eau + WC privatifs</strong> • petit jardin
                   </td>
                   <td className="p-3">
-                    70 € / nuit — min 2 nuits — caution 150 €
+                    70 € / nuit — min 2 nuits
                   </td>
                 </tr>
               </tbody>
