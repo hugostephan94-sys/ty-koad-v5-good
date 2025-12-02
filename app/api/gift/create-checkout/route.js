@@ -15,10 +15,9 @@ export async function POST(req) {
       message,
     } = await req.json();
 
-    // 💶 Prix cohérents avec ton front :
-    // C2 semaine = 110 €, C2 week-end = 130 €
+    // 💶 Prix cohérents avec le front
     const PLAN_PRICES = {
-      c2_week: 11000,    // 110 €
+      c2_week: 11000, // 110 €
       c2_weekend: 13000, // 130 €
       c1_2n: 14000,
       c1_3n: 21000,
@@ -26,11 +25,11 @@ export async function POST(req) {
     };
 
     const EXTRAS = {
-      fruits:      { label: "Plateau fruits de mer",     unit_amount: 6500 },
-      champagne:   { label: "Champagne",                 unit_amount: 4500 },
-      petales:     { label: "Pétales de rose",           unit_amount: 1500 },
-      charcuterie: { label: "Plateau charcuterie",       unit_amount: 3000 },
-      petitdej2:   { label: "Petit déjeuner (2 pers.)",  unit_amount: 2400 },
+      fruits: { label: "Plateau fruits de mer", unit_amount: 6500 },
+      champagne: { label: "Champagne", unit_amount: 4500 },
+      petales: { label: "Pétales de rose", unit_amount: 1500 },
+      charcuterie: { label: "Plateau charcuterie", unit_amount: 3000 },
+      petitdej2: { label: "Petit déjeuner (2 pers.)", unit_amount: 2400 },
     };
 
     const planAmount = PLAN_PRICES[planKey];
@@ -66,15 +65,21 @@ export async function POST(req) {
       })),
     ];
 
-    const base = process.env.SITE_URL || "http://localhost:3000";
+    // 🔗 URL de base pour les retours Stripe
+    const baseUrl =
+      (process.env.NEXT_PUBLIC_SITE_URL ||
+        process.env.SITE_URL ||
+        (process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : "")) || "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: buyerEmail || undefined,
       payment_method_types: ["card"],
       line_items,
-      success_url: `${base}/cadeau/succes?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/cadeau`,
+      success_url: `${baseUrl}/cadeau/succes?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/cadeau`,
       metadata: {
         chalet,
         planKey,
@@ -87,10 +92,9 @@ export async function POST(req) {
       },
     });
 
-    return new Response(
-      JSON.stringify({ url: session.url }),
-      { status: 200 }
-    );
+    return new Response(JSON.stringify({ url: session.url }), {
+      status: 200,
+    });
   } catch (err) {
     console.error(err);
     return new Response(
