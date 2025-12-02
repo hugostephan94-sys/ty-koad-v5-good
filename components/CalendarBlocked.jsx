@@ -7,6 +7,7 @@ const isFriSat = (d) => {
   const wd = d.getDay();
   return wd === 5 || wd === 6;
 };
+
 function iso(d) {
   return d.toISOString().slice(0, 10);
 }
@@ -34,6 +35,14 @@ export default function CalendarBlocked({
   const [when, setWhen] = useState(monthStart(new Date()));
   const [busy, setBusy] = useState(new Set());
   const [loading, setLoading] = useState(false);
+
+  // today normalisé (pour le petit point)
+  const today = useMemo(() => {
+    const t = new Date();
+    t.setHours(12, 0, 0, 0);
+    return t;
+  }, []);
+  const todayISO = useMemo(() => iso(today), [today]);
 
   useEffect(() => {
     let ignore = false;
@@ -96,12 +105,12 @@ export default function CalendarBlocked({
       {/* Grille des mois */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {monthsArr.map((m, i) => (
-          <Month key={i} date={m} busy={busy} />
+          <Month key={i} date={m} busy={busy} today={today} todayISO={todayISO} />
         ))}
       </div>
 
       {/* Légende */}
-      <div className="mt-2 flex items-center gap-2 text-[11px] text-stone-500">
+      <div className="mt-3 flex items-center gap-2 text-[11px] text-stone-500">
         <span
           className="inline-block h-2.5 w-4 rounded-sm"
           style={{
@@ -115,7 +124,7 @@ export default function CalendarBlocked({
   );
 }
 
-function Month({ date, busy }) {
+function Month({ date, busy, today, todayISO }) {
   const title = date.toLocaleDateString("fr-FR", {
     month: "long",
     year: "numeric",
@@ -129,7 +138,7 @@ function Month({ date, busy }) {
   const monthIndex = date.getMonth();
 
   return (
-    <div className="bg-white border border-stone-200 rounded-2xl p-3 sm:p-4 shadow-sm">
+    <div className="bg-white border border-stone-200 rounded-3xl p-3 sm:p-4 shadow-sm hover:shadow-md transition">
       <div className="text-center font-medium capitalize text-sm text-stone-800">
         {title}
       </div>
@@ -150,12 +159,13 @@ function Month({ date, busy }) {
           const key = iso(d);
           const isBusy = busy.has(key);
           const weekend = isFriSat(d);
+          const isToday = key === todayISO;
 
           const baseClasses =
-            "h-8 sm:h-9 rounded-lg text-[11px] sm:text-[12px] flex items-center justify-center border transition";
+            "relative h-8 sm:h-9 rounded-lg text-[11px] sm:text-[12px] flex items-center justify-center border transition";
           const inMonthClasses = inMonth
             ? weekend
-              ? "bg-amber-50 text-stone-800 border-amber-100"
+              ? "bg-emerald-50 text-stone-800 border-stone-200"
               : "bg-white text-stone-800 border-stone-200"
             : "bg-stone-50 text-stone-400 border-stone-100";
 
@@ -173,6 +183,9 @@ function Month({ date, busy }) {
               }
             >
               {d.getDate()}
+              {isToday && (
+                <span className="absolute -bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-600" />
+              )}
             </div>
           );
         })}

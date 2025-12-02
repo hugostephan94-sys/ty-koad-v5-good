@@ -149,11 +149,11 @@ export default function CalendarSelectable({
     setCheckOut(dayStr);
   }
 
-  // surbrillance douce entre check-in et check-out
+  // ✅ surbrillance sur tout l’intervalle, bornes incluses
   function inRange(d) {
     if (!checkIn || !checkOut) return false;
     const x = iso(d);
-    return x > checkIn && x < checkOut;
+    return x >= checkIn && x <= checkOut;
   }
   function isStart(d) {
     return checkIn && iso(d) === checkIn;
@@ -369,10 +369,12 @@ function Month({
                   ? weekendTint + " text-stone-800 border-stone-200"
                   : "bg-stone-50 text-stone-400 border-stone-100",
                 disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-stone-50",
+                // ✅ toute la plage sélectionnée (bornes incluses)
+                inSel ? "bg-emerald-100/60" : "",
+                // ✅ début / fin plus marqués
                 (startSel || endSel)
-                  ? "ring-2 ring-emerald-500 bg-emerald-50 font-semibold"
+                  ? "ring-2 ring-emerald-500 font-semibold"
                   : "",
-                inSel ? "bg-emerald-100/40" : "",
               ].join(" ")}
               style={
                 isBusy
