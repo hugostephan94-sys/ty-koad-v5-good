@@ -25,11 +25,11 @@ export async function POST(req) {
     };
 
     const EXTRAS = {
-      fruits: { label: "Plateau fruits de mer", unit_amount: 6500 },
-      champagne: { label: "Champagne", unit_amount: 4500 },
-      petales: { label: "Pétales de rose", unit_amount: 1500 },
-      charcuterie: { label: "Plateau charcuterie", unit_amount: 3000 },
-      petitdej2: { label: "Petit déjeuner (2 pers.)", unit_amount: 2400 },
+      fruits:      { label: "Plateau fruits de mer",     unit_amount: 6500 },
+      champagne:   { label: "Champagne",                 unit_amount: 4500 },
+      petales:     { label: "Pétales de rose",           unit_amount: 1500 },
+      charcuterie: { label: "Plateau charcuterie",       unit_amount: 3000 },
+      petitdej2:   { label: "Petit déjeuner (2 pers.)",  unit_amount: 2400 },
     };
 
     const planAmount = PLAN_PRICES[planKey];
@@ -65,13 +65,16 @@ export async function POST(req) {
       })),
     ];
 
-    // 🔗 URL de base pour les retours Stripe
+    // 🔗 URL de base : on privilégie l'origin de la requête
+    // ex : https://www.chalets-tykoad.fr en prod
+    const { origin } = new URL(req.url);
     const baseUrl =
-      (process.env.NEXT_PUBLIC_SITE_URL ||
-        process.env.SITE_URL ||
-        (process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : "")) || "http://localhost:3000";
+      origin ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.SITE_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -92,9 +95,10 @@ export async function POST(req) {
       },
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ url: session.url }),
+      { status: 200 }
+    );
   } catch (err) {
     console.error(err);
     return new Response(
