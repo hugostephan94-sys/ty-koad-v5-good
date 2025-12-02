@@ -1,7 +1,9 @@
 // app/api/gift/pdf/route.js
 import PDFDocument from "pdfkit";
-import path from "path";
 
+export const runtime = "nodejs"; // important pour pdfkit (pas de runtime edge)
+
+/** formatte un montant en centimes -> "110,00 €" */
 function eur(cents) {
   return (cents / 100).toLocaleString("fr-FR", {
     style: "currency",
@@ -23,27 +25,44 @@ export async function GET(req) {
     const extrasCSV   = searchParams.get("extrasCSV") || "";
 
     const doc = new PDFDocument({ size: "A4", margin: 50 });
+
     const chunks = [];
     doc.on("data", (c) => chunks.push(c));
-    const done = new Promise((res) => doc.on("end", res));
 
-    /* ───── Bandeau haut avec logo ───── */
+    const done = new Promise((resolve, reject) => {
+      doc.on("end", resolve);
+      doc.on("error", reject);
+    });
+
+    /* ───── Bandeau haut (fond vert) ───── */
     doc.rect(0, 0, doc.page.width, 90).fillColor("#065f46").fill();
 
-    // Logo dans le bandeau (optionnel, on try/catch pour éviter les plantages si le fichier manque)
+    // Logo : on le charge via URL publique (pas depuis le disque)
     try {
-      const logoPath = path.join(process.cwd(), "public", "logo-tykoad.png");
-      // Ajuste la taille si besoin (fit: [largeur, hauteur])
-      doc.image(logoPath, 40, 18, { fit: [54, 54] });
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        process.env.SITE_URL ||
+        "https://chalets-tykoad.fr";
+
+      const logoUrl = `${baseUrl}/logo-tykoad.png`;
+      const resLogo = await fetch(logoUrl);
+
+      if (resLogo.ok) {
+        const arrayBuffer = await resLogo.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        // ajuster la taille si besoin
+        doc.image(buffer, 40, 18, { fit: [54, 54] });
+      }
     } catch (e) {
       console.error("Erreur chargement logo PDF:", e);
+      // on ignore, le PDF reste utilisable
     }
 
     // Titre + date
     doc
       .fillColor("#ffffff")
       .fontSize(20)
-      .text("Les Chalets Ty-Koad", 110, 34); // décalé à droite du logo
+      .text("Les Chalets Ty-Koad", 110, 34); // à droite du logo
 
     doc
       .fontSize(12)
@@ -54,10 +73,10 @@ export async function GET(req) {
 
     /* ───── Carte centrale ───── */
     doc.moveDown(2);
-    const cardX = 50,
-      cardY = 120,
-      cardW = doc.page.width - 100,
-      cardH = 520;
+    const cardX = 50;
+    const cardY = 120;
+    const cardW = doc.page.width - 100;
+    const cardH = 520;
 
     doc
       .roundedRect(cardX, cardY, cardW, cardH, 16)
@@ -136,17 +155,6 @@ export async function GET(req) {
       .text(code, left + 260, y + 19);
     doc.font("Helvetica");
 
-    /* ───── Watermark ───── */
-    doc.save();
-    doc.rotate(-30, {
-      origin: [doc.page.width / 2, doc.page.height / 2],
-    });
-    doc
-      .fontSize(80)
-      .fillColor("#f3f4f6")
-      .text("TY-KOAD", doc.page.width / 2 - 180, doc.page.height / 2 - 60);
-    doc.restore();
-
     /* ───── Bas de carte ───── */
     doc
       .fillColor("#6b7280")
@@ -159,6 +167,7 @@ export async function GET(req) {
         { width: cardW - 48 }
       );
 
+    // Fin du PDF
     doc.end();
     await done;
 
@@ -166,13 +175,13 @@ export async function GET(req) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        // 🔧 ici il manquait les guillemets dans ta version
         "Content-Disposition":
           'attachment; filename="cheque-cadeau-tykoad.pdf"',
       },
     });
   } catch (e) {
-    console.error(e);
-    return new Response("PDF error", { status: 500 });
+    console.error("PDF error:", e);
+    // on renvoie le message complet pour debug (tu pourras remettre juste "PDF error" ensuite)
+    return new Response(`PDF error: ${e.message}`, { status: 500 });
   }
 }
