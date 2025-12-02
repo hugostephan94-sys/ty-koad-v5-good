@@ -36,7 +36,7 @@ export async function POST(req) {
     const mainItem = session.line_items?.data?.[0];
     const planLabel = mainItem?.description || "Séjour";
 
-    // Mapping lisible des extras
+    // ✅ mapping lisible des extras
     const extrasCSV = (md.extrasCSV || "")
       .split(",")
       .filter(Boolean)
@@ -51,7 +51,7 @@ export async function POST(req) {
       })
       .join(", ");
 
-    // Code “joli” déterministe
+    // code “joli”
     const base = (
       (md.fromName || "") +
       "-" +
@@ -85,8 +85,8 @@ export async function POST(req) {
       },
     });
 
-    // URL pour le PDF : on se base sur l'origin de la requête
-    const { origin } = new URL(req.url); // ex : https://chalets-tykoad.fr
+    // 🔗 URL pour le PDF : on se base sur l’origin de la requête
+    const { origin } = new URL(req.url); // ex: https://chalets-tykoad.fr
     const pdfUrl = new URL("/api/gift/pdf", origin);
     pdfUrl.searchParams.set("code", code);
     pdfUrl.searchParams.set("chaletLabel", chaletLabel);
@@ -99,49 +99,64 @@ export async function POST(req) {
 
     // 📧 Envoi email via Resend
     const resendApiKey = process.env.RESEND_API_KEY;
+    // ⚠️ on force un "from" qui marche (comme ton /contact)
     const resendFrom =
       process.env.RESEND_FROM ||
       "Les Chalets Ty-Koad <onboarding@resend.dev>";
 
     let emailError = null;
 
-    if (resendApiKey) {
+    // On nettoie bien les adresses e-mail
+    const toList = [md.buyerEmail, md.toEmail]
+      .filter((v) => typeof v === "string")
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    console.log("Gift claim – Resend payload", {
+      from: resendFrom,
+      toList,
+      code,
+    });
+
+    const html = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5">
+        <h2>Merci pour votre achat – Chèque cadeau Ty-Koad</h2>
+        <p><b>Code :</b> ${code}</p>
+        <p>
+          <b>Chalet :</b> ${chaletLabel}<br/>
+          <b>Séjour :</b> ${planLabel}<br/>
+          <b>Montant :</b> ${(amountCents / 100).toLocaleString("fr-FR", {
+            style: "currency",
+            currency: "EUR",
+          })}<br/>
+          ${extrasCSV ? `<b>Options :</b> ${extrasCSV}<br/>` : ""}
+        </p>
+        <p>➡️ <a href="${pdfUrl.toString()}">Télécharger le chèque cadeau (PDF)</a></p>
+      </div>
+    `;
+
+    if (!resendApiKey) {
+      emailError = "RESEND_API_KEY non configurée.";
+    } else if (!resendFrom) {
+      emailError = "RESEND_FROM non configuré.";
+    } else if (!toList.length) {
+      emailError =
+        "Aucune adresse e-mail valide fournie (acheteur ou bénéficiaire).";
+    } else {
       try {
         const resend = new Resend(resendApiKey);
-        const toList = [md.buyerEmail, md.toEmail].filter(Boolean);
-
-        console.log("Gift email toList =", toList, "from =", resendFrom);
-
-        if (toList.length > 0) {
-          await resend.emails.send({
-            from: resendFrom,
-            to: toList,
-            subject: `Votre chèque cadeau Ty-Koad – code ${code}`,
-            html: `
-              <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5">
-                <h2>Merci pour votre achat – Chèque cadeau Ty-Koad</h2>
-                <p><b>Code :</b> ${code}</p>
-                <p>
-                  <b>Chalet :</b> ${chaletLabel}<br/>
-                  <b>Séjour :</b> ${planLabel}<br/>
-                  <b>Montant :</b> ${(amountCents / 100).toLocaleString("fr-FR", {
-                    style: "currency",
-                    currency: "EUR",
-                  })}<br/>
-                  ${extrasCSV ? `<b>Options :</b> ${extrasCSV}<br/>` : ""}
-                </p>
-                <p>➡️ <a href="${pdfUrl.toString()}">Télécharger le chèque cadeau (PDF)</a></p>
-              </div>
-            `,
-          });
-        }
+        const result = await resend.emails.send({
+          from: resendFrom,
+          to: toList,
+          subject: `Votre chèque cadeau Ty-Koad – code ${code}`,
+          html,
+        });
+        console.log("Gift claim – Resend result", result);
       } catch (e) {
         console.error("Resend error:", e);
-        emailError = e.message || "Erreur d'envoi de l'e-mail.";
+        emailError =
+          (e && e.message) || "Erreur d'envoi de l'e-mail via Resend.";
       }
-    } else {
-      emailError = "RESEND_API_KEY non configurée.";
-      console.error(emailError);
     }
 
     return new Response(
