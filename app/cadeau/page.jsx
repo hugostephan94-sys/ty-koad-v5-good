@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import SiteHeader from "../../components/SiteHeader";
 
 /* ---------- Config ---------- */
@@ -79,34 +79,23 @@ function GiftPreview({
           <div className="absolute -left-3 top-24 h-6 w-6 rounded-full bg-emerald-50 border border-stone-200" />
           <div className="absolute -right-3 top-24 h-6 w-6 rounded-full bg-emerald-50 border border-stone-200" />
 
-          {/* En-tête */}
-          <div className="flex items-center justify-between px-6 pt-6">
-            <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-emerald-50 p-1 ring-1 ring-emerald-900/10 flex items-center justify-center overflow-hidden">
-                <Image
-                  src="/logo-tykoad.png"      // → fichier dans /public
-                  alt="Les Chalets Ty-Koad"
-                  fill
-                  className="object-contain"
-                  sizes="48px"
-                />
-              </div>
-              <div>
-                <div className="text-sm text-emerald-900 font-semibold">
-                  Les Chalets Ty-Koad
-                </div>
-                <div className="text-xs text-stone-500">{today}</div>
-              </div>
+          {/* En-tête avec logo */}
+          <div className="flex items-center gap-3 px-6 pt-6">
+            <div className="relative h-10 w-10 sm:h-12 sm:w-12 overflow-hidden rounded-full bg-white border border-emerald-100 shadow-sm">
+              <Image
+                src="/logo-tykoad.png"
+                alt="Les Chalets Ty-Koad"
+                fill
+                className="object-contain"
+                sizes="48px"
+              />
             </div>
-            <div
-              className="h-12 w-12 rounded-full opacity-90"
-              style={{
-                background:
-                  "conic-gradient(from 0deg, #34d399, #06b6d4, #a78bfa, #f59e0b, #34d399)",
-                filter: "saturate(1.2)",
-              }}
-              aria-hidden
-            />
+            <div>
+              <div className="text-sm text-emerald-900 font-semibold">
+                Les Chalets Ty-Koad
+              </div>
+              <div className="text-xs text-stone-500">{today}</div>
+            </div>
           </div>
 
           {/* Bandeau titre */}
@@ -284,7 +273,7 @@ export default function CadeauPage() {
             <div className="bg-white/90 rounded-3xl border border-stone-200 p-5 sm:p-6 md:p-7 shadow-sm">
               <form
                 onSubmit={submit}
-                className="space-y-5 text-sm sm:text[15px]"
+                className="space-y-5 text-sm sm:text-[15px]"
               >
                 {/* Chalet */}
                 <div className="space-y-1">
