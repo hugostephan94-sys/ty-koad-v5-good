@@ -98,14 +98,23 @@ export default function CalendarSelectable({
     setCheckOut("");
   }
 
+  function *daysGen(ci, n){
+    const d = new Date(ci);
+    for(let i=0;i<n;i++){
+      const dd = new Date(d);
+      dd.setDate(d.getDate()+i);
+      yield dd;
+    }
+  }
   function isRangeBlocked(ci, co) {
     if (!ci || !co) return false;
-    const s = new Date(ci),
-      e = new Date(co);
+    const s = new Date(ci);
+    const e = new Date(co);
     s.setHours(12, 0, 0, 0);
     e.setHours(12, 0, 0, 0);
     if (s < today || e <= today) return true;
-    for (let d = new Date(s); d < e; d.setDate(d.getDate() + 1)) {
+    const n = nightsBetween(ci, co);
+    for (const d of daysGen(ci, n)) {
       if (busy.has(iso(d))) return true;
     }
     return false;
@@ -147,19 +156,6 @@ export default function CalendarSelectable({
     if (isRangeBlocked(checkIn, dayStr)) return;
 
     setCheckOut(dayStr);
-  }
-
-  // ✅ surbrillance sur tout l’intervalle, bornes incluses
-  function inRange(d) {
-    if (!checkIn || !checkOut) return false;
-    const x = iso(d);
-    return x >= checkIn && x <= checkOut;
-  }
-  function isStart(d) {
-    return checkIn && iso(d) === checkIn;
-  }
-  function isEnd(d) {
-    return checkOut && iso(d) === checkOut;
   }
 
   const prevDisabled = useMemo(() => {
@@ -267,9 +263,6 @@ export default function CalendarSelectable({
             checkOut={checkOut}
             minNights={chalet.minNights}
             onPick={onPick}
-            inRange={inRange}
-            isStart={isStart}
-            isEnd={isEnd}
           />
         ))}
       </div>
@@ -298,9 +291,6 @@ function Month({
   checkOut,
   minNights,
   onPick,
-  inRange,
-  isStart,
-  isEnd,
 }) {
   const title = date.toLocaleDateString("fr-FR", {
     month: "long",
@@ -350,12 +340,40 @@ function Month({
           const disabled =
             (isBusy && !canUseAsCheckout) || isPast || tooShort;
 
-          // styles de sélection
-          const startSel = isStart(d);
-          const endSel = isEnd(d);
-          const inSel = inRange(d);
+          // ---- Sélection / plage complète ----
+          const isStart = checkIn && key === checkIn;
+          const isEnd = checkOut && key === checkOut;
+          const isInRange =
+            checkIn && checkOut && key > checkIn && key < checkOut;
+
+          const isSelected = isStart || isEnd || isInRange;
 
           const isToday = key === iso(today);
+
+          let classes =
+            "relative h-8 sm:h-9 rounded-lg text-[11px] sm:text-[12px] flex items-center justify-center border transition ";
+
+          if (!inMonth) {
+            classes += "bg-stone-50 text-stone-400 border-stone-100 ";
+          } else if (isSelected) {
+            if (isStart || isEnd) {
+              classes +=
+                "bg-emerald-600 text-white border-emerald-700 font-semibold ";
+            } else {
+              classes +=
+                "bg-emerald-100 text-emerald-900 border-emerald-300 ";
+            }
+          } else {
+            classes +=
+              weekendTint + " text-stone-800 border-stone-200 ";
+          }
+
+          if (!disabled && !isSelected) {
+            classes += "hover:bg-stone-50 ";
+          }
+          if (disabled) {
+            classes += "opacity-60 cursor-not-allowed ";
+          }
 
           return (
             <button
@@ -363,21 +381,9 @@ function Month({
               onClick={() => !disabled && onPick(key)}
               type="button"
               disabled={disabled}
-              className={[
-                "relative h-8 sm:h-9 rounded-lg text-[11px] sm:text-[12px] flex items-center justify-center border transition",
-                inMonth
-                  ? weekendTint + " text-stone-800 border-stone-200"
-                  : "bg-stone-50 text-stone-400 border-stone-100",
-                disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-stone-50",
-                // ✅ toute la plage sélectionnée (bornes incluses)
-                inSel ? "bg-emerald-100/60" : "",
-                // ✅ début / fin plus marqués
-                (startSel || endSel)
-                  ? "ring-2 ring-emerald-500 font-semibold"
-                  : "",
-              ].join(" ")}
+              className={classes}
               style={
-                isBusy
+                isBusy && !isSelected
                   ? {
                       backgroundImage:
                         "repeating-linear-gradient(135deg, rgba(239,68,68,.36) 0, rgba(239,68,68,.36) 10px, transparent 10px, transparent 20px)",
