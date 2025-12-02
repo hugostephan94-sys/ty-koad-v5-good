@@ -1,9 +1,9 @@
 // app/api/gift/pdf/route.js
-import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit/js/pdfkit.standalone.js"; // ⬅️ version standalone
 
-export const runtime = "nodejs"; // important pour pdfkit (pas de runtime edge)
+export const runtime = "nodejs"; // important : pas de runtime edge
 
-/** formatte un montant en centimes -> "110,00 €" */
+// formatte un montant en centimes -> "110,00 €"
 function eur(cents) {
   return (cents / 100).toLocaleString("fr-FR", {
     style: "currency",
@@ -37,7 +37,7 @@ export async function GET(req) {
     /* ───── Bandeau haut (fond vert) ───── */
     doc.rect(0, 0, doc.page.width, 90).fillColor("#065f46").fill();
 
-    // Logo : on le charge via URL publique (pas depuis le disque)
+    // Logo : on le charge via URL publique
     try {
       const baseUrl =
         process.env.NEXT_PUBLIC_SITE_URL ||
@@ -50,7 +50,6 @@ export async function GET(req) {
       if (resLogo.ok) {
         const arrayBuffer = await resLogo.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        // ajuster la taille si besoin
         doc.image(buffer, 40, 18, { fit: [54, 54] });
       }
     } catch (e) {
@@ -62,7 +61,7 @@ export async function GET(req) {
     doc
       .fillColor("#ffffff")
       .fontSize(20)
-      .text("Les Chalets Ty-Koad", 110, 34); // à droite du logo
+      .text("Les Chalets Ty-Koad", 110, 34);
 
     doc
       .fontSize(12)
@@ -181,7 +180,6 @@ export async function GET(req) {
     });
   } catch (e) {
     console.error("PDF error:", e);
-    // on renvoie le message complet pour debug (tu pourras remettre juste "PDF error" ensuite)
     return new Response(`PDF error: ${e.message}`, { status: 500 });
   }
 }
