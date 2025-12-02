@@ -37,6 +37,7 @@ function GiftSuccessInner() {
     error: undefined,
     code: undefined,
     downloadUrl: undefined,
+    emailStatus: undefined,
   });
 
   useEffect(() => {
@@ -44,7 +45,13 @@ function GiftSuccessInner() {
 
     (async () => {
       if (!session_id) {
-        setState({ loading: false, error: "Session introuvable" });
+        setState({
+          loading: false,
+          error: "Session introuvable",
+          code: undefined,
+          downloadUrl: undefined,
+          emailStatus: undefined,
+        });
         return;
       }
 
@@ -58,14 +65,21 @@ function GiftSuccessInner() {
         const data = await res.json();
         if (ignore) return;
 
-        if (data.error) {
-          setState({ loading: false, error: data.error });
+        if (!res.ok || data.error) {
+          setState({
+            loading: false,
+            error: data.error || "Erreur serveur lors du traitement du chèque cadeau.",
+            code: undefined,
+            downloadUrl: undefined,
+            emailStatus: undefined,
+          });
         } else {
           setState({
             loading: false,
             error: undefined,
             code: data.code,
             downloadUrl: data.downloadUrl,
+            emailStatus: data.emailStatus,
           });
         }
       } catch (err) {
@@ -76,6 +90,9 @@ function GiftSuccessInner() {
               err instanceof Error
                 ? err.message
                 : "Une erreur inattendue est survenue",
+            code: undefined,
+            downloadUrl: undefined,
+            emailStatus: undefined,
           });
         }
       }
@@ -115,13 +132,29 @@ function GiftSuccessInner() {
     );
   }
 
+  // Petit texte selon l’état des e-mails
+  let emailText = "Le chèque cadeau a été envoyé par e-mail.";
+  if (state.emailStatus === "missing_resend_config") {
+    emailText =
+      "Le chèque cadeau est créé, mais l’e-mail n’a pas pu être envoyé (configuration Resend manquante côté serveur).";
+  } else if (state.emailStatus === "no_recipient") {
+    emailText =
+      "Le chèque cadeau est créé, mais aucun destinataire e-mail n’a été renseigné.";
+  } else if (state.emailStatus === "send_error") {
+    emailText =
+      "Le chèque cadeau est créé, mais une erreur est survenue lors de l’envoi de l’e-mail.";
+  } else if (state.emailStatus === "sent") {
+    emailText =
+      "Le chèque cadeau a été envoyé par e-mail à l’acheteur (et au bénéficiaire si renseigné).";
+  }
+
   return (
     <div className="rounded-2xl border border-emerald-200 bg-white p-6 sm:p-7 shadow-sm">
       <h1 className="text-2xl sm:text-3xl font-bold text-emerald-900">
         Merci 🎁
       </h1>
       <p className="mt-2 text-sm sm:text-base text-stone-700">
-        Votre paiement est confirmé. Le chèque cadeau a été envoyé par e-mail.
+        {emailText}
       </p>
 
       <div className="mt-5 p-4 sm:p-5 rounded-xl bg-emerald-50 border border-emerald-100">
