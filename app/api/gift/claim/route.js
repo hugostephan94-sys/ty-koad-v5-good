@@ -14,10 +14,9 @@ export async function POST(req) {
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const session = await stripe.checkout.sessions.retrieve(
-      session_id,
-      { expand: ["line_items"] }
-    );
+    const session = await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ["line_items"],
+    });
 
     if (session.payment_status !== "paid") {
       return new Response(
@@ -37,7 +36,7 @@ export async function POST(req) {
     const mainItem = session.line_items?.data?.[0];
     const planLabel = mainItem?.description || "Séjour";
 
-    // ✅ mapping lisible des extras (inclut les nouveaux)
+    // Extras lisibles
     const extrasCSV = (md.extrasCSV || "")
       .split(",")
       .filter(Boolean)
@@ -52,11 +51,11 @@ export async function POST(req) {
       })
       .join(", ");
 
-    // code “joli”
+    // Code “joli”
     const base = (
-      md.fromName +
+      (md.fromName || "") +
       "-" +
-      md.toName +
+      (md.toName || "") +
       "-" +
       new Date().toISOString().slice(0, 10)
     ).toUpperCase();
@@ -68,7 +67,7 @@ export async function POST(req) {
     const chunk = (h.toString(36).toUpperCase() + "0000").slice(0, 8);
     const code = `TKO-${chunk.slice(0, 4)}-${chunk.slice(4, 8)}`;
 
-    // enregistre le Gift si pas déjà présent
+    // Enregistre / upsert le Gift
     await prisma.gift.upsert({
       where: { code },
       update: {},
@@ -86,7 +85,7 @@ export async function POST(req) {
       },
     });
 
-    // 🔗 URL pour le PDF : on se base sur l'origin de la requête
+    // URL PDF basée sur l'origin réel de la requête
     const { origin } = new URL(req.url); // ex: https://chalets-tykoad.fr
     const pdfUrl = new URL("/api/gift/pdf", origin);
     pdfUrl.searchParams.set("code", code);
@@ -98,9 +97,13 @@ export async function POST(req) {
     pdfUrl.searchParams.set("message", md.message || "");
     pdfUrl.searchParams.set("extrasCSV", extrasCSV);
 
-    // 📧 Envoi email via Resend
+    /* ─────────  Envoi email via Resend  ───────── */
+
     const resendApiKey = process.env.RESEND_API_KEY;
-    const resendFrom = process.env.RESEND_FROM;
+    const resendFrom =
+      process.env.RESEND_FROM ||
+      "Les Chalets Ty-Koad <onboarding@resend.dev>";
+
     let emailError = null;
 
     const html = `
@@ -114,20 +117,21 @@ export async function POST(req) {
             style: "currency",
             currency: "EUR",
           })}<br/>
-          ${
-            extrasCSV
-              ? `<b>Options :</b> ${extrasCSV}<br/>`
-              : ""
-          }
+          ${extrasCSV ? `<b>Options :</b> ${extrasCSV}<br/>` : ""}
         </p>
         <p>➡️ <a href="${pdfUrl.toString()}">Télécharger le chèque cadeau (PDF)</a></p>
       </div>
     `;
 
-    if (resendApiKey && resendFrom) {
+    if (!resendApiKey) {
+      emailError = "RESEND_API_KEY non configurée.";
+      console.error(emailError);
+    } else {
       try {
         const resend = new Resend(resendApiKey);
         const toList = [md.buyerEmail, md.toEmail].filter(Boolean);
+
+        console.log("Gift email toList:", toList, "from:", resendFrom);
 
         if (toList.length) {
           await resend.emails.send({
@@ -136,14 +140,17 @@ export async function POST(req) {
             subject: `Votre chèque cadeau Ty-Koad – code ${code}`,
             html,
           });
+        } else {
+          emailError = "Aucun destinataire (buyerEmail / toEmail manquants).";
+          console.error(emailError);
         }
       } catch (e) {
         console.error("Resend error:", e);
-        emailError = e.message || "Erreur d'envoi de l'e-mail.";
+        emailError =
+          e instanceof Error
+            ? e.message
+            : "Erreur d'envoi de l'e-mail.";
       }
-    } else {
-      emailError =
-        "RESEND_API_KEY ou RESEND_FROM non configuré dans les variables d'environnement.";
     }
 
     return new Response(
