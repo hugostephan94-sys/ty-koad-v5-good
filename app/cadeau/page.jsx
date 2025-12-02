@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import SiteHeader from "../../components/SiteHeader";
 
@@ -50,33 +51,6 @@ const giftCode = (fromName, toName) => {
   return `TKO-${chunk.slice(0, 4)}-${chunk.slice(4, 8)}`;
 };
 
-/* ---------- Petit logo “triskell” en SVG ---------- */
-function Triskell({ className = "h-9 w-9" }) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden>
-      <defs>
-        <linearGradient id="g" x1="0" x2="1">
-          <stop offset="0" stopColor="#065f46" />
-          <stop offset="1" stopColor="#0ea5a0" />
-        </linearGradient>
-      </defs>
-      <circle
-        cx="50"
-        cy="50"
-        r="48"
-        fill="none"
-        stroke="url(#g)"
-        strokeWidth="4"
-      />
-      <g fill="url(#g)">
-        <path d="M50 48c8-12 18-10 18-20 0-6-5-11-11-11S46 22 46 28c0 3 1 5 4 8z" />
-        <path d="M52 50c-12 8-10 18-20 18-6 0-11-5-11-11s5-11 11-11c3 0 5 1 8 4z" />
-        <path d="M54 52c8 12 18 10 18 20 0 6-5 11-11 11s-11-5-11-11c0-3 1-5 4-8z" />
-      </g>
-    </svg>
-  );
-}
-
 /* ---------- Carte d’aperçu soignée ---------- */
 function GiftPreview({
   chalet,
@@ -108,8 +82,14 @@ function GiftPreview({
           {/* En-tête */}
           <div className="flex items-center justify-between px-6 pt-6">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-emerald-50 p-1 ring-1 ring-emerald-900/10">
-                <Triskell />
+              <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-emerald-50 p-1 ring-1 ring-emerald-900/10 flex items-center justify-center overflow-hidden">
+                <Image
+                  src="/logo-tykoad.png"      // → fichier dans /public
+                  alt="Les Chalets Ty-Koad"
+                  fill
+                  className="object-contain"
+                  sizes="48px"
+                />
               </div>
               <div>
                 <div className="text-sm text-emerald-900 font-semibold">
