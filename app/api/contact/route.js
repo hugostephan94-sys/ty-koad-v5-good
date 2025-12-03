@@ -4,6 +4,12 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// on réutilise le même "from" que pour les cadeaux
+const resendFrom = (
+  process.env.RESEND_FROM ||
+  "Les Chalets Ty-Koad <hugo@chalets-tykoad.fr>"
+).trim();
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -28,7 +34,7 @@ export async function POST(req) {
 
     // ✉️ mail vers toi (Hugo & Nina)
     await resend.emails.send({
-      from: "Les Chalets Ty-Koad <onboarding@resend.dev>",
+      from: resendFrom,
       to: "hugostephan94@gmail.com",
       subject: subjectLine,
       text: [

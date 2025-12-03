@@ -102,10 +102,10 @@ export async function POST(req) {
     // 📧 Envoi email via Resend
     const resendApiKey = process.env.RESEND_API_KEY;
 
-    // On force un "from" correct et on enlève espaces / retours à la ligne
+    // IMPORTANT : utiliser ton domaine + trim pour enlever espaces/retours
     const resendFrom = (
       process.env.RESEND_FROM ||
-      "Les Chalets Ty-Koad <onboarding@resend.dev>"
+      "Les Chalets Ty-Koad <hugo@chalets-tykoad.fr>"
     ).trim();
 
     let emailError = null;
