@@ -6,6 +6,7 @@ import prisma from "../../../../lib/db";
 export async function POST(req) {
   try {
     const { session_id } = await req.json();
+
     if (!session_id) {
       return new Response(
         JSON.stringify({ error: "session_id manquant" }),
@@ -14,6 +15,7 @@ export async function POST(req) {
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
     const session = await stripe.checkout.sessions.retrieve(session_id, {
       expand: ["line_items"],
     });
@@ -36,7 +38,7 @@ export async function POST(req) {
     const mainItem = session.line_items?.data?.[0];
     const planLabel = mainItem?.description || "Séjour";
 
-    // ✅ mapping lisible des extras
+    // Mapping lisible des extras
     const extrasCSV = (md.extrasCSV || "")
       .split(",")
       .filter(Boolean)
@@ -51,7 +53,7 @@ export async function POST(req) {
       })
       .join(", ");
 
-    // code “joli”
+    // Génération du code cadeau “joli”
     const base = (
       (md.fromName || "") +
       "-" +
@@ -85,7 +87,7 @@ export async function POST(req) {
       },
     });
 
-    // 🔗 URL pour le PDF : on se base sur l’origin de la requête
+    // URL pour le PDF : on se base sur l’origin de la requête
     const { origin } = new URL(req.url); // ex: https://chalets-tykoad.fr
     const pdfUrl = new URL("/api/gift/pdf", origin);
     pdfUrl.searchParams.set("code", code);
@@ -99,21 +101,23 @@ export async function POST(req) {
 
     // 📧 Envoi email via Resend
     const resendApiKey = process.env.RESEND_API_KEY;
-    // ⚠️ on force un "from" qui marche (comme ton /contact)
-    const resendFrom =
+
+    // On force un "from" correct et on enlève espaces / retours à la ligne
+    const resendFrom = (
       process.env.RESEND_FROM ||
-      "Les Chalets Ty-Koad <onboarding@resend.dev>";
+      "Les Chalets Ty-Koad <onboarding@resend.dev>"
+    ).trim();
 
     let emailError = null;
 
-    // On nettoie bien les adresses e-mail
+    // Nettoyage des adresses e-mail
     const toList = [md.buyerEmail, md.toEmail]
       .filter((v) => typeof v === "string")
       .map((v) => v.trim())
       .filter(Boolean);
 
     console.log("Gift claim – Resend payload", {
-      from: resendFrom,
+      from: JSON.stringify(resendFrom),
       toList,
       code,
     });
