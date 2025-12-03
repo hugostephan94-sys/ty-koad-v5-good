@@ -1,8 +1,9 @@
 // app/api/gift/pdf/route.js
-import PDFDocument from "pdfkit/js/pdfkit.standalone.js"; // version standalone
+import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
+import fs from "fs";
 
-export const runtime = "nodejs"; // important : pas de runtime edge
-export const dynamic = "force-dynamic"; // ⬅️ ajoute ça
+export const runtime = "nodejs";          // pas de runtime edge
+export const dynamic = "force-dynamic";   // route 100% dynamique
 
 // formatte un montant en centimes -> "110,00 €"
 function eur(cents) {
@@ -17,368 +18,270 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
 
     const code        = searchParams.get("code") || "TKO-XXXX-XXXX";
-    const chaletLabel = searchParams.get("chaletLabel") || "Ty-Koad";
+    const chaletLabel = searchParams.get("chaletLabel") || "Chalets Ty-Koad";
     const planLabel   = searchParams.get("planLabel") || "Séjour";
     const amountCents = Number(searchParams.get("amountCents") || "0");
-    const fromName    = searchParams.get("fromName") || "";
-    const toName      = searchParams.get("toName") || "";
+    const fromName    = searchParams.get("fromName") || "…";
+    const toName      = searchParams.get("toName") || "…";
     const message     = searchParams.get("message") || "";
     const extrasCSV   = searchParams.get("extrasCSV") || "";
 
-    // On découpe les options éventuelles en liste
     const extras = extrasCSV
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    const doc = new PDFDocument({ size: "A4", margin: 60 });
 
     const chunks = [];
     doc.on("data", (c) => chunks.push(c));
-
     const done = new Promise((resolve, reject) => {
       doc.on("end", resolve);
       doc.on("error", reject);
     });
 
-    const pageWidth  = doc.page.width;
-    const pageHeight = doc.page.height;
+    const pageWidth = doc.page.width;
 
-    /* ───── Fond général ───── */
+    /* ───── Fond crème ───── */
     doc
-      .rect(0, 0, pageWidth, pageHeight)
-      .fillColor("#f3f4f6")
+      .rect(0, 0, doc.page.width, doc.page.height)
+      .fillColor("#fdf8f3")
       .fill();
 
-    /* ───── Bandeau haut avec dégradé ───── */
-    const headerHeight = 110;
-    const headerGradient = doc
-      .linearGradient(0, 0, pageWidth, 0)
-      .stop(0, "#065f46")
-      .stop(1, "#16a34a");
+    doc.fillColor("#374151"); // gris foncé global
 
-    doc
-      .rect(0, 0, pageWidth, headerHeight)
-      .fill(headerGradient);
-
-    // Logo
+    /* ───── Logo centré ───── */
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        process.env.SITE_URL ||
-        "https://chalets-tykoad.fr";
+      const logoPath = "public/logo-tykoad.png"; // ton fichier dans /public
+      const logoBuffer = fs.readFileSync(logoPath);
+      const logoWidth = 90;
+      const logoX = (pageWidth - logoWidth) / 2;
+      const logoY = 60;
 
-      const logoUrl = `${baseUrl}/logo-tykoad.png`;
-      const resLogo = await fetch(logoUrl);
-
-      if (resLogo.ok) {
-        const arrayBuffer = await resLogo.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        // On met le logo en blanc sur le bandeau vert
-        doc.image(buffer, 40, 25, { fit: [60, 60] });
-      }
+      doc.image(logoBuffer, logoX, logoY, { fit: [logoWidth, logoWidth] });
     } catch (e) {
       console.error("Erreur chargement logo PDF:", e);
       // on ignore, le PDF reste utilisable
     }
 
-    // Titre + sous-titre dans le bandeau
-    doc.font("Helvetica-Bold")
-      .fillColor("#ffffff")
-      .fontSize(22)
-      .text("Les Chalets Ty-Koad", 120, 32);
+    let y = 170;
 
-    doc.font("Helvetica")
-      .fontSize(11)
-      .text("Carte cadeau séjour", 120, 58);
-
-    // Date à droite
+    /* ───── Titre principal ───── */
     doc
-      .fontSize(11)
-      .text(
-        new Date().toLocaleDateString("fr-FR"),
-        pageWidth - 150,
-        40,
-        { width: 110, align: "right" }
-      );
-
-    /* ───── Carte centrale ───── */
-    const cardX = 50;
-    const cardY = 140;
-    const cardW = pageWidth - 100;
-    const cardH = 500;
-
-    // Ombre légère
-    doc.save();
-    doc
-      .rect(cardX + 4, cardY + 6, cardW, cardH)
-      .fillColor("#d1d5db")
-      .fill();
-    doc.restore();
-
-    // Carte blanche
-    doc
-      .roundedRect(cardX, cardY, cardW, cardH, 18)
-      .fillColor("#ffffff")
-      .strokeColor("#e5e7eb")
-      .lineWidth(1)
-      .fillAndStroke();
-
-    const innerX = cardX + 32;
-    const innerY = cardY + 32;
-    const innerW = cardW - 64;
-
-    /* ───── Petit bandeau "Chèque cadeau" en haut de la carte ───── */
-    const badgeW = 160;
-    const badgeH = 26;
-    doc
-      .roundedRect(
-        innerX,
-        innerY,
-        badgeW,
-        badgeH,
-        13
-      )
-      .fillColor("#ecfdf5")
-      .strokeColor("#6ee7b7")
-      .lineWidth(1)
-      .fillAndStroke();
-
-    doc
-      .fillColor("#047857")
       .font("Helvetica-Bold")
-      .fontSize(11)
-      .text("Chèque cadeau", innerX, innerY + 6, {
-        width: badgeW,
+      .fontSize(18)
+      .fillColor("#374151")
+      .text("🎁 CHÈQUE CADEAU", 0, y, {
         align: "center",
       });
 
-    // Intitulé séjour
-    let blockY = innerY + badgeH + 20;
+    y += 40;
 
-    doc
-      .fillColor("#6b7280")
-      .font("Helvetica")
-      .fontSize(10)
-      .text("Pour une escapade à :", innerX, blockY);
-
-    blockY += 14;
-
-    doc
-      .fillColor("#111827")
-      .font("Helvetica-Bold")
-      .fontSize(16)
-      .text(chaletLabel, innerX, blockY, {
-        width: innerW,
-      });
-
-    blockY += 20;
-
-    doc
-      .fillColor("#6b7280")
-      .font("Helvetica")
-      .fontSize(10)
-      .text(planLabel, innerX, blockY);
-
-    blockY += 24;
-
-    // Ligne séparatrice
-    doc
-      .moveTo(innerX, blockY)
-      .lineTo(innerX + innerW, blockY)
-      .strokeColor("#e5e7eb")
-      .lineWidth(1)
-      .stroke();
-
-    blockY += 20;
-
-    /* ───── Mise en page en 2 colonnes ───── */
-    const colGap = 26;
-    const colW = (innerW - colGap) / 2;
-
-    const leftX = innerX;
-    const rightX = innerX + colW + colGap;
-
-    let leftY = blockY;
-    let rightY = blockY;
-
-    /* ───── Colonne gauche : bénéficiaire / expéditeur / message / options ───── */
-
-    // Bénéficiaire
-    doc
-      .fillColor("#6b7280")
-      .fontSize(10)
-      .text("Bénéficiaire", leftX, leftY);
-
-    leftY += 14;
-
-    doc
-      .fillColor("#111827")
-      .font("Helvetica-Bold")
-      .fontSize(14)
-      .text(toName || "—", leftX, leftY, {
-        width: colW,
-      });
-
-    leftY += 24;
-
-    // De la part de
+    /* ───── Pour / Offert par ───── */
     doc
       .font("Helvetica")
-      .fillColor("#6b7280")
-      .fontSize(10)
-      .text("De la part de", leftX, leftY);
-
-    leftY += 14;
-
-    doc
-      .fillColor("#111827")
       .fontSize(12)
-      .text(fromName || "—", leftX, leftY, {
-        width: colW,
+      .fillColor("#4b5563")
+      .text(`Pour : ${toName}`, 100, y, {
+        align: "center",
+        width: pageWidth - 200,
       });
 
-    leftY += 24;
+    y += 22;
 
-    // Message personnel (si présent)
+    doc
+      .text(`Offert par : ${fromName}`, 100, y, {
+        align: "center",
+        width: pageWidth - 200,
+      });
+
+    y += 35;
+
+    /* ───── Séjour offert / valeur ───── */
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(13)
+      .fillColor("#374151")
+      .text("Séjour offert :", 100, y, {
+        align: "center",
+        width: pageWidth - 200,
+      });
+
+    y += 22;
+
+    // Description du séjour (planLabel + chaletLabel)
+    doc
+      .font("Helvetica")
+      .fontSize(12)
+      .fillColor("#4b5563")
+      .text(planLabel, 100, y, {
+        align: "center",
+        width: pageWidth - 200,
+      });
+
+    y += 20;
+
+    doc
+      .font("Helvetica")
+      .fontSize(12)
+      .fillColor("#4b5563")
+      .text(`Dans le ${chaletLabel}`, 100, y, {
+        align: "center",
+        width: pageWidth - 200,
+      });
+
+    y += 24;
+
+    if (extras.length > 0) {
+      doc
+        .font("Helvetica")
+        .fontSize(11.5)
+        .fillColor("#4b5563")
+        .text(
+          extras.map((e) => `• ${e}`).join("\n"),
+          100,
+          y,
+          {
+            align: "center",
+            width: pageWidth - 200,
+          }
+        );
+
+      y += 18 * extras.length + 8;
+    }
+
+    if (amountCents > 0) {
+      doc
+        .font("Helvetica-Oblique")
+        .fontSize(11.5)
+        .fillColor("#6b7280")
+        .text(
+          `Valeur du chèque cadeau : ${eur(amountCents)}`,
+          100,
+          y,
+          {
+            align: "center",
+            width: pageWidth - 200,
+          }
+        );
+      y += 28;
+    } else {
+      y += 10;
+    }
+
+    /* ───── Message personnalisé (optionnel) ───── */
     if (message) {
-      const msgText = `« ${message} »`;
-      const msgWidth = colW - 18;
-      const msgHeight = doc.heightOfString(msgText, {
-        width: msgWidth,
-        align: "left",
-      }) + 22;
+      const boxWidth = pageWidth - 200;
+      const textWidth = boxWidth - 30;
+      const msg = `« ${message} »`;
+
+      const msgHeight = doc.heightOfString(msg, {
+        width: textWidth,
+        align: "center",
+      }) + 20;
+
+      const boxX = (pageWidth - boxWidth) / 2;
+      const boxY = y;
 
       doc
-        .roundedRect(leftX, leftY, colW, msgHeight, 10)
-        .fillColor("#ecfdf5")
-        .strokeColor("#d1fae5")
+        .roundedRect(boxX, boxY, boxWidth, msgHeight, 12)
+        .fillColor("#fef3c7")
+        .strokeColor("#fde68a")
         .lineWidth(1)
         .fillAndStroke();
 
       doc
-        .fillColor("#065f46")
+        .font("Helvetica-Oblique")
         .fontSize(11)
-        .text(msgText, leftX + 9, leftY + 9, {
-          width: msgWidth,
+        .fillColor("#92400e")
+        .text(msg, boxX + 15, boxY + 10, {
+          width: textWidth,
+          align: "center",
         });
 
-      leftY += msgHeight + 18;
+      y += msgHeight + 30;
     }
 
-    // Options (si présentes)
-    if (extras.length > 0) {
-      doc
-        .fillColor("#6b7280")
-        .fontSize(10)
-        .text("Options choisies", leftX, leftY);
-
-      leftY += 12;
-
-      doc
-        .fillColor("#111827")
-        .fontSize(11);
-
-      extras.forEach((opt) => {
-        doc.text(`• ${opt}`, leftX, leftY, {
-          width: colW,
-        });
-        leftY += 14;
-      });
-    }
-
-    /* ───── Colonne droite : montant / code / rappel séjour ───── */
-
-    // Montant
+    /* ───── Code cadeau ───── */
     doc
-      .fillColor("#6b7280")
       .font("Helvetica")
-      .fontSize(10)
-      .text("Montant du bon", rightX, rightY);
+      .fontSize(12)
+      .fillColor("#374151")
+      .text(`Code du chèque cadeau : ${code}`, 100, y, {
+        align: "center",
+        width: pageWidth - 200,
+      });
 
-    rightY += 16;
+    y += 40;
 
+    /* ───── Comment utiliser ce bon ───── */
     doc
-      .fillColor("#065f46")
       .font("Helvetica-Bold")
-      .fontSize(24)
-      .text(eur(amountCents), rightX, rightY, {
-        width: colW,
+      .fontSize(13)
+      .fillColor("#374151")
+      .text("💡 Comment utiliser ce bon", 100, y, {
+        align: "center",
+        width: pageWidth - 200,
       });
 
-    rightY += 34;
+    y += 28;
 
-    // Code cadeau
+    const instructions = [
+      "Réservation obligatoire à l’avance, selon disponibilités",
+      "Valable pour une nuit ou un séjour selon les conditions indiquées lors de l’achat",
+      "À mentionner lors de la réservation (site, téléphone ou message)",
+    ];
+
     doc
-      .fillColor("#6b7280")
       .font("Helvetica")
-      .fontSize(10)
-      .text("Code cadeau", rightX, rightY);
+      .fontSize(11.5)
+      .fillColor("#4b5563")
+      .text(
+        instructions.map((s) => `• ${s}`).join("\n"),
+        120,
+        y,
+        {
+          align: "left",
+          width: pageWidth - 240,
+        }
+      );
 
-    rightY += 14;
+    y += instructions.length * 18 + 40;
 
-    const codeBoxH = 34;
+    /* ───── Phrase de fin / signature ───── */
     doc
-      .roundedRect(rightX, rightY, colW, codeBoxH, 8)
-      .fillColor("#111827")
-      .strokeColor("#111827")
-      .lineWidth(1)
-      .fillAndStroke();
+      .font("Helvetica")
+      .fontSize(11.5)
+      .fillColor("#374151")
+      .text(
+        "Nous avons hâte de vous accueillir aux Chalets Ty-Koad pour une parenthèse détente sous les arbres et les bulles du spa ✨",
+        80,
+        y,
+        {
+          align: "center",
+          width: pageWidth - 160,
+        }
+      );
+
+    y += 40;
 
     doc
-      .fillColor("#ffffff")
-      .font("Courier-Bold")
-      .fontSize(15)
-      .text(code, rightX + 10, rightY + 9, {
-        width: colW - 20,
+      .font("Helvetica-Oblique")
+      .fontSize(11.5)
+      .fillColor("#4b5563")
+      .text("Hugo & Nina", 0, y, {
         align: "center",
       });
 
-    doc.font("Helvetica");
-    rightY += codeBoxH + 26;
+    y += 20;
 
-    // Rappel du séjour sur la droite
     doc
+      .font("Helvetica")
+      .fontSize(10.5)
       .fillColor("#9ca3af")
-      .fontSize(9)
-      .text(
-        "À utiliser lors d'une réservation\naux Chalets Ty-Koad.",
-        rightX,
-        rightY,
-        { width: colW }
-      );
-
-    /* ───── Texte bas de carte (conditions / contact) ───── */
-    const footerY = cardY + cardH - 70;
-
-    doc
-      .fillColor("#6b7280")
-      .fontSize(9.5)
-      .text(
-        "Ce bon est utilisable lors de la réservation (directe ou via plateforme) conformément à nos CGV. " +
-          "Il n’est ni échangeable, ni remboursable, sauf dispositions légales contraires. " +
-          "Pour toute question : hello@ty-koad.fr",
-        innerX,
-        footerY,
-        { width: innerW, align: "left" }
-      );
-
-    // Petits points décoratifs au bas de la carte
-    const dotsY = cardY + cardH - 26;
-    const centerX = cardX + cardW / 2;
-
-    doc
-      .circle(centerX - 14, dotsY, 2.2)
-      .fillColor("#d1d5db")
-      .fill();
-    doc
-      .circle(centerX, dotsY, 2.2)
-      .fillColor("#9ca3af")
-      .fill();
-    doc
-      .circle(centerX + 14, dotsY, 2.2)
-      .fillColor("#d1d5db")
-      .fill();
+      .text("Les Chalets Ty-Koad – Laz", 0, y, {
+        align: "center",
+      });
 
     // Fin du PDF
     doc.end();
