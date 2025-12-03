@@ -1,5 +1,5 @@
 // app/api/gift/pdf/route.js
-import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
+import PDFDocument from "pdfkit";
 
 export const runtime = "nodejs";          // pas de runtime edge
 export const dynamic = "force-dynamic";   // route 100% dynamique
@@ -47,9 +47,9 @@ export async function GET(req) {
       doc.on("error", reject);
     });
 
-    const pageWidth   = doc.page.width;
-    const contentX    = 60;                     // marge gauche
-    const contentWidth = pageWidth - 2 * 60;    // zone centrale
+    const pageWidth    = doc.page.width;
+    const contentX     = 60;                     // marge gauche
+    const contentWidth = pageWidth - 2 * 60;     // zone centrale
 
     /* ───── Fond crème ───── */
     doc
@@ -59,10 +59,15 @@ export async function GET(req) {
 
     doc.fillColor("#374151"); // gris foncé global
 
-    /* ───── Logo centré (via fetch sur /logo-tykoad.png) ───── */
+    /* ───── Logo centré (pdfkit Node + fetch) ───── */
     try {
-      const logoUrl = new URL("/logo-tykoad.png", req.url); // pointe vers /public/logo-tykoad.png
-      const resLogo = await fetch(logoUrl.toString());
+      const { origin } = new URL(req.url);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        process.env.SITE_URL ||
+        origin;
+
+      const resLogo = await fetch(`${baseUrl}/logo-tykoad.png`);
 
       if (resLogo.ok) {
         const arrayBuffer = await resLogo.arrayBuffer();
