@@ -1,4 +1,4 @@
-// Fix Stripe / redeploy
+// app/payer/page.jsx
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
@@ -17,6 +17,7 @@ const stripePromise = loadStripe(
 );
 
 function eur(n) {
+  // n est en CENTIMES ici
   return (n / 100).toLocaleString("fr-FR", {
     style: "currency",
     currency: "EUR",

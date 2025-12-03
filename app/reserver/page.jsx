@@ -1,3 +1,4 @@
+// app/reserver/page.jsx
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -7,6 +8,7 @@ import CalendarSelectable from "../../components/CalendarSelectable";
 import { CHALETS } from "../../lib/chalets";
 
 function eur(n) {
+  // n est en EUROS
   return (n || 0).toLocaleString("fr-FR", {
     style: "currency",
     currency: "EUR",
@@ -47,7 +49,7 @@ function ReserverInner() {
   // Code cadeau
   const [giftCode, setGiftCode] = useState("");
   const [gift, setGift] = useState(null); // { valueCents, message }
-  const discountCents = gift?.valueCents ?? 0;
+  const discountCents = gift?.valueCents ?? 0; // EN CENTIMES
 
   useEffect(() => {
     setTab(initialTab);
@@ -76,10 +78,15 @@ function ReserverInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  // Texte de prix avec prise en compte du code cadeau
+  // state.total est en EUROS -> on convertit en centimes pour appliquer la réduction
   const priceText = useMemo(() => {
     if (!state?.nights) return "";
-    const net = Math.max(0, (state.total || 0) - discountCents);
-    return eur(net);
+    const totalEuros = state.total || 0;
+    const totalCents = Math.round(totalEuros * 100); // -> centimes
+    const netCents = Math.max(0, totalCents - discountCents);
+    const netEuros = netCents / 100;
+    return eur(netEuros);
   }, [state, discountCents]);
 
   const peopleError =
@@ -88,7 +95,7 @@ function ReserverInner() {
       : totalGuests > maxGuests
       ? `Capacité max : ${maxGuests} personne${
           maxGuests > 1 ? "s" : ""
-        }.`
+        }`
       : adults < 1
       ? "Au moins 1 adulte requis."
       : "";
@@ -129,21 +136,28 @@ function ReserverInner() {
 
   function goPay() {
     const { checkIn, checkOut, nights, total } = state;
-    const net = Math.max(0, (total || 0) - discountCents);
 
-    // net est en centimes -> on passe le montant en euros dans l’URL
+    // total est en EUROS -> on passe en centimes pour appliquer la réduction
+    const totalEuros = total || 0;
+    const totalCents = Math.round(totalEuros * 100);
+    const netCents = Math.max(0, totalCents - discountCents);
+    const netEuros = netCents / 100;
+
     const q = new URLSearchParams({
       chalet: chalet.id,
       ci: checkIn,
       co: checkOut,
       nights: String(nights),
-      amount: String(net / 100), // montant en € pour la page /payer
+
+      // montant en € pour la page /payer
+      amount: String(netEuros),
+
       adults: String(adults),
       children: String(children),
       ...(gift
         ? {
             giftCode: giftCode.trim().toUpperCase(),
-            giftValue: String(discountCents),
+            giftValue: String(discountCents), // on laisse en centimes dans l’URL
           }
         : {}),
     }).toString();
