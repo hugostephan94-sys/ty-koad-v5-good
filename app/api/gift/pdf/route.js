@@ -1,6 +1,7 @@
 // app/api/gift/pdf/route.js
 import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
 import fs from "fs";
+import path from "path";
 
 export const runtime = "nodejs";          // pas de runtime edge
 export const dynamic = "force-dynamic";   // route 100% dynamique
@@ -13,6 +14,13 @@ function eur(cents) {
   });
 }
 
+// (optionnel) on retire les emojis pour éviter les caractères bizarres
+function stripEmojis(str) {
+  if (!str) return "";
+  // enlève la plupart des emojis modernes
+  return str.replace(/[\u{1F000}-\u{1FAFF}]/gu, "");
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -23,8 +31,11 @@ export async function GET(req) {
     const amountCents = Number(searchParams.get("amountCents") || "0");
     const fromName    = searchParams.get("fromName") || "…";
     const toName      = searchParams.get("toName") || "…";
-    const message     = searchParams.get("message") || "";
+    let   message     = searchParams.get("message") || "";
     const extrasCSV   = searchParams.get("extrasCSV") || "";
+
+    // Nettoyage éventuel du message perso (pour éviter les emojis cassés)
+    message = stripEmojis(message);
 
     const extras = extrasCSV
       .split(",")
@@ -52,7 +63,7 @@ export async function GET(req) {
 
     /* ───── Logo centré ───── */
     try {
-      const logoPath = "public/logo-tykoad.png"; // ton fichier dans /public
+      const logoPath = path.join(process.cwd(), "public", "logo-tykoad.png");
       const logoBuffer = fs.readFileSync(logoPath);
       const logoWidth = 90;
       const logoX = (pageWidth - logoWidth) / 2;
@@ -71,7 +82,7 @@ export async function GET(req) {
       .font("Helvetica-Bold")
       .fontSize(18)
       .fillColor("#374151")
-      .text("🎁 CHÈQUE CADEAU", 0, y, {
+      .text("CHÈQUE CADEAU", 0, y, {
         align: "center",
       });
 
@@ -214,12 +225,12 @@ export async function GET(req) {
 
     y += 40;
 
-    /* ───── Comment utiliser ce bon ───── */
+    /* ───── Comment utiliser ce bon (sans emoji) ───── */
     doc
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#374151")
-      .text("💡 Comment utiliser ce bon", 100, y, {
+      .text("Comment utiliser ce bon", 100, y, {
         align: "center",
         width: pageWidth - 200,
       });
@@ -248,13 +259,13 @@ export async function GET(req) {
 
     y += instructions.length * 18 + 40;
 
-    /* ───── Phrase de fin / signature ───── */
+    /* ───── Phrase de fin / signature (sans emoji) ───── */
     doc
       .font("Helvetica")
       .fontSize(11.5)
       .fillColor("#374151")
       .text(
-        "Nous avons hâte de vous accueillir aux Chalets Ty-Koad pour une parenthèse détente sous les arbres et les bulles du spa ✨",
+        "Nous avons hâte de vous accueillir aux Chalets Ty-Koad pour une parenthèse détente sous les arbres et les bulles du spa.",
         80,
         y,
         {
