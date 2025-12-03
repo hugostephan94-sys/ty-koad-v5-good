@@ -28,6 +28,66 @@ function toEUR(n) {
 export default function SuccessPage() {
   const q = useQuery();
 
+  const [saveState, setSaveState] = useState({
+    saving: true,
+    error: undefined,
+  });
+
+  // 👉 Dès que les paramètres sont dispo, on enregistre la réservation en DB
+  useEffect(() => {
+    // On attend d’avoir au moins ces 3 infos
+    if (!q.chalet || !q.ci || !q.co) {
+      setSaveState((s) => ({ ...s, saving: false }));
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch("/api/reservations/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chalet: q.chalet,
+            ci: q.ci,             // ex: "2025-12-10"
+            co: q.co,             // ex: "2025-12-12"
+            firstname: q.name || "",
+            email: q.email || "",
+            adults: q.adults ? Number(q.adults) : 2,
+            children: q.children ? Number(q.children) : 0,
+            status: "confirmed",
+            // tu peux ajouter d’autres champs si ton saveReservation les gère :
+            // amount: q.amount ? Number(q.amount) : undefined,
+            // pi: q.pi,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          setSaveState({
+            saving: false,
+            error:
+              data.error ||
+              "Erreur lors de l’enregistrement de la réservation.",
+          });
+        } else {
+          setSaveState({
+            saving: false,
+            error: undefined,
+          });
+        }
+      } catch (e) {
+        setSaveState({
+          saving: false,
+          error:
+            e instanceof Error
+              ? e.message
+              : "Erreur inattendue lors de l’enregistrement.",
+        });
+      }
+    })();
+  }, [q.chalet, q.ci, q.co, q.name, q.email, q.adults, q.children]);
+
   return (
     <>
       <SiteHeader />
@@ -45,6 +105,18 @@ export default function SuccessPage() {
               </code>{" "}
               est configurée.
             </p>
+
+            {/* Petit statut côté enregistrement DB */}
+            {saveState.saving && (
+              <p className="mt-2 text-xs text-stone-500">
+                Enregistrement de votre réservation dans notre système…
+              </p>
+            )}
+            {saveState.error && (
+              <p className="mt-2 text-xs text-rose-600">
+                {saveState.error}
+              </p>
+            )}
 
             {/* Détails réservation / paiement */}
             <div className="mt-6 grid gap-4 sm:grid-cols-2 text-xs sm:text-sm">
