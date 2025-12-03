@@ -2,6 +2,7 @@
 import PDFDocument from "pdfkit/js/pdfkit.standalone.js"; // version standalone
 
 export const runtime = "nodejs"; // important : pas de runtime edge
+export const dynamic = "force-dynamic"; // ⬅️ ajoute ça
 
 // formatte un montant en centimes -> "110,00 €"
 function eur(cents) {
