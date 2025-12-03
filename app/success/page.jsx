@@ -28,65 +28,39 @@ function toEUR(n) {
 export default function SuccessPage() {
   const q = useQuery();
 
-  const [saveState, setSaveState] = useState({
-    saving: true,
-    error: undefined,
-  });
-
-  // 👉 Dès que les paramètres sont dispo, on enregistre la réservation en DB
+  // Enregistrement silencieux de la réservation en DB
   useEffect(() => {
-    // On attend d’avoir au moins ces 3 infos
-    if (!q.chalet || !q.ci || !q.co) {
-      setSaveState((s) => ({ ...s, saving: false }));
-      return;
-    }
+    if (!q.chalet || !q.ci || !q.co) return;
 
     (async () => {
       try {
-        const res = await fetch("/api/reservations/save", {
+        await fetch("/api/reservations/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chalet: q.chalet,
-            ci: q.ci,             // ex: "2025-12-10"
-            co: q.co,             // ex: "2025-12-12"
+            ci: q.ci,
+            co: q.co,
             firstname: q.name || "",
             email: q.email || "",
             adults: q.adults ? Number(q.adults) : 2,
             children: q.children ? Number(q.children) : 0,
             status: "confirmed",
-            // tu peux ajouter d’autres champs si ton saveReservation les gère :
+            // tu peux rajouter d’autres champs si ton saveReservation les gère
             // amount: q.amount ? Number(q.amount) : undefined,
             // pi: q.pi,
           }),
         });
-
-        const data = await res.json();
-
-        if (!res.ok || data.error) {
-          setSaveState({
-            saving: false,
-            error:
-              data.error ||
-              "Erreur lors de l’enregistrement de la réservation.",
-          });
-        } else {
-          setSaveState({
-            saving: false,
-            error: undefined,
-          });
-        }
       } catch (e) {
-        setSaveState({
-          saving: false,
-          error:
-            e instanceof Error
-              ? e.message
-              : "Erreur inattendue lors de l’enregistrement.",
-        });
+        console.error("Erreur enregistrement réservation :", e);
       }
     })();
   }, [q.chalet, q.ci, q.co, q.name, q.email, q.adults, q.children]);
+
+  const amountText =
+    q.amount && !isNaN(Number(q.amount))
+      ? toEUR(q.amount)
+      : "—";
 
   return (
     <>
@@ -98,27 +72,16 @@ export default function SuccessPage() {
             <h1 className="text-2xl sm:text-3xl font-bold">
               Merci ! Votre réservation est confirmée ✅
             </h1>
+
             <p className="mt-2 text-sm sm:text-base text-stone-700">
-              Un e-mail de confirmation est envoyé si la clé{" "}
-              <code className="text-[11px] bg-stone-100 px-1 py-0.5 rounded">
-                RESEND_API_KEY
-              </code>{" "}
-              est configurée.
+              Un e-mail de confirmation vient de vous être envoyé à{" "}
+              <span className="font-medium">
+                {q.email || "l’adresse communiquée"}
+              </span>
+              . Pensez à vérifier vos spams si vous ne le voyez pas.
             </p>
 
-            {/* Petit statut côté enregistrement DB */}
-            {saveState.saving && (
-              <p className="mt-2 text-xs text-stone-500">
-                Enregistrement de votre réservation dans notre système…
-              </p>
-            )}
-            {saveState.error && (
-              <p className="mt-2 text-xs text-rose-600">
-                {saveState.error}
-              </p>
-            )}
-
-            {/* Détails réservation / paiement */}
+            {/* Détails réservation */}
             <div className="mt-6 grid gap-4 sm:grid-cols-2 text-xs sm:text-sm">
               <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
                 <div className="font-medium mb-1">Détails du séjour</div>
@@ -126,27 +89,26 @@ export default function SuccessPage() {
                 <div>Arrivée : {q.ci || "—"}</div>
                 <div>Départ : {q.co || "—"}</div>
                 <div>Nuits : {q.nights || "—"}</div>
-                <div>Montant payé : {toEUR(q.amount)}</div>
+                <div>Montant payé : {amountText}</div>
               </div>
 
               <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
-                <div className="font-medium mb-1">Paiement</div>
-                <div className="break-all">
-                  PaymentIntent :{" "}
-                  <code className="text-[11px] bg-stone-100 px-1 py-0.5 rounded">
-                    {q.pi || "—"}
-                  </code>
+                <div className="font-medium mb-1">Informations pratiques</div>
+                <div>
+                  Vous recevrez dans l’e-mail de confirmation toutes les
+                  informations utiles pour votre arrivée (accès au chalet,
+                  horaires, etc.).
                 </div>
-                <div className="mt-1">
-                  Client : {q.name || "—"}{" "}
-                  {q.email && (
-                    <span className="text-stone-500">({q.email})</span>
-                  )}
-                </div>
+                {q.name && (
+                  <div className="mt-2">
+                    Réservation au nom de :{" "}
+                    <span className="font-medium">{q.name}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Boutons */}
+            {/* Bouton retour */}
             <div className="mt-6 flex flex-wrap gap-3">
               <a
                 href="/"
