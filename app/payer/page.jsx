@@ -1,8 +1,7 @@
-// app/payer/page.jsx
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -36,8 +35,8 @@ export default function PayerPage() {
               Paiement sécurisé
             </h1>
             <p className="mt-2 text-sm sm:text-base text-stone-700">
-              Finalisez votre réservation en réglant le montant indiqué ci-dessous.
-              Le paiement est sécurisé via Stripe 🔒
+              Finalisez votre réservation en réglant le montant indiqué
+              ci-dessous. Le paiement est sécurisé via Stripe 🔒
             </p>
           </header>
 
@@ -71,7 +70,7 @@ function CheckoutShell() {
   const giftCode = search.get("giftCode") || "";
   const giftValueCents = Number(search.get("giftValue") || 0);
 
-  // infos client éventuellement passées dans l’URL (pour plus tard)
+  // infos client éventuellement passées dans l’URL
   const firstname = search.get("firstname") || "";
   const emailFromUrl = search.get("email") || "";
 
@@ -160,6 +159,7 @@ function CheckoutInner({
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
 
   const [status, setStatus] = useState("ready"); // ready | paying | done | error
   const [error, setError] = useState("");
@@ -176,7 +176,7 @@ function CheckoutInner({
     setStatus("paying");
     setError("");
 
-    const { error: err } = await stripe.confirmPayment({
+    const { error: err, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: "if_required",
       // on ajoute les infos de facturation pour Stripe
@@ -229,6 +229,21 @@ function CheckoutInner({
     }
 
     setStatus("done");
+
+    // 🔁 REDIRECTION VERS /success POUR ENREGISTRER LA RÉSA
+    const piId = paymentIntent?.id || "";
+    const params = new URLSearchParams({
+      chalet: chalet || "",
+      ci: checkin || "",
+      co: checkout || "",
+      nights: String(nights || 0),
+      amount: (amountCents / 100).toFixed(2),
+      pi: piId,
+      name: firstname || "",
+      email: email.trim(),
+    });
+
+    router.push(`/success?${params.toString()}`);
   }
 
   return (
