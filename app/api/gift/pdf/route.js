@@ -1,7 +1,5 @@
 // app/api/gift/pdf/route.js
 import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
-import fs from "fs";
-import path from "path";
 
 export const runtime = "nodejs";          // pas de runtime edge
 export const dynamic = "force-dynamic";   // route 100% dynamique
@@ -14,7 +12,7 @@ function eur(cents) {
   });
 }
 
-// (optionnel) on retire les emojis pour éviter les caractères bizarres
+// on retire les emojis pour éviter les caractères bizarres
 function stripEmojis(str) {
   if (!str) return "";
   return str.replace(/[\u{1F000}-\u{1FAFF}]/gu, "");
@@ -49,9 +47,9 @@ export async function GET(req) {
       doc.on("error", reject);
     });
 
-    const pageWidth = doc.page.width;
-    const contentX = 60;                         // marge gauche
-    const contentWidth = pageWidth - 2 * 60;     // zone centrale
+    const pageWidth   = doc.page.width;
+    const contentX    = 60;                     // marge gauche
+    const contentWidth = pageWidth - 2 * 60;    // zone centrale
 
     /* ───── Fond crème ───── */
     doc
@@ -61,46 +59,23 @@ export async function GET(req) {
 
     doc.fillColor("#374151"); // gris foncé global
 
-    /* ───── Logo centré ───── */
+    /* ───── Logo centré (via fetch sur /logo-tykoad.png) ───── */
     try {
-      let logoBuffer = null;
+      const logoUrl = new URL("/logo-tykoad.png", req.url); // pointe vers /public/logo-tykoad.png
+      const resLogo = await fetch(logoUrl.toString());
 
-      // 1) tentative via le système de fichiers
-      try {
-        const logoPath = path.join(process.cwd(), "public", "logo-tykoad.png");
-        logoBuffer = fs.readFileSync(logoPath);
-      } catch (e) {
-        console.error("Erreur chargement logo via fs:", e);
-      }
-
-      // 2) fallback : via fetch sur l'URL publique
-      if (!logoBuffer) {
-        try {
-          const baseUrl =
-            process.env.NEXT_PUBLIC_SITE_URL ||
-            process.env.SITE_URL ||
-            "https://chalets-tykoad.fr";
-
-          const resLogo = await fetch(`${baseUrl}/logo-tykoad.png`);
-          if (resLogo.ok) {
-            const arrayBuffer = await resLogo.arrayBuffer();
-            logoBuffer = Buffer.from(arrayBuffer);
-          } else {
-            console.error("Erreur fetch logo PDF:", resLogo.status);
-          }
-        } catch (e) {
-          console.error("Erreur chargement logo via fetch:", e);
-        }
-      }
-
-      if (logoBuffer) {
+      if (resLogo.ok) {
+        const arrayBuffer = await resLogo.arrayBuffer();
+        const logoBuffer = Buffer.from(arrayBuffer);
         const logoWidth = 90;
         const logoX = (pageWidth - logoWidth) / 2;
         const logoY = 60;
         doc.image(logoBuffer, logoX, logoY, { fit: [logoWidth, logoWidth] });
+      } else {
+        console.error("Erreur fetch logo PDF:", resLogo.status);
       }
     } catch (e) {
-      console.error("Erreur globale chargement logo PDF:", e);
+      console.error("Erreur chargement logo PDF:", e);
     }
 
     let y = 170;
@@ -210,9 +185,9 @@ export async function GET(req) {
 
     /* ───── Message personnalisé (optionnel) ───── */
     if (message) {
-      const boxWidth = contentWidth;
+      const boxWidth  = contentWidth;
       const textWidth = boxWidth - 30;
-      const msg = `« ${message} »`;
+      const msg       = `« ${message} »`;
 
       const msgHeight = doc.heightOfString(msg, {
         width: textWidth,
