@@ -1,7 +1,8 @@
+// app/payer/page.jsx
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -130,6 +131,7 @@ function CheckoutShell() {
   return (
     <Elements stripe={stripePromise} options={{ clientSecret }}>
       <CheckoutInner
+        clientSecret={clientSecret}
         amountCents={amountCents}
         giftCode={giftCode}
         firstname={firstname}
@@ -148,6 +150,7 @@ function CheckoutShell() {
  * Affiche PaymentElement et gère le bouton "Payer"
  */
 function CheckoutInner({
+  clientSecret,
   amountCents,
   giftCode,
   firstname,
@@ -159,7 +162,6 @@ function CheckoutInner({
 }) {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
 
   const [status, setStatus] = useState("ready"); // ready | paying | done | error
   const [error, setError] = useState("");
@@ -176,7 +178,7 @@ function CheckoutInner({
     setStatus("paying");
     setError("");
 
-    const { error: err, paymentIntent } = await stripe.confirmPayment({
+    const { error: err } = await stripe.confirmPayment({
       elements,
       redirect: "if_required",
       // on ajoute les infos de facturation pour Stripe
@@ -230,8 +232,12 @@ function CheckoutInner({
 
     setStatus("done");
 
-    // 🔁 REDIRECTION VERS /success POUR ENREGISTRER LA RÉSA
-    const piId = paymentIntent?.id || "";
+    // On récupère un id de PaymentIntent approximatif depuis le clientSecret
+    // clientSecret ressemble à "pi_xxx_secret_yyy"
+    const piId =
+      (clientSecret || "").split("_secret")[0] || "";
+
+    // Construire l’URL /success avec tous les paramètres
     const params = new URLSearchParams({
       chalet: chalet || "",
       ci: checkin || "",
@@ -243,7 +249,10 @@ function CheckoutInner({
       email: email.trim(),
     });
 
-    router.push(`/success?${params.toString()}`);
+    // 🔁 Redirection forcée vers /success
+    setTimeout(() => {
+      window.location.href = `/success?${params.toString()}`;
+    }, 500); // petite pause pour laisser apparaître le message vert
   }
 
   return (
