@@ -17,7 +17,6 @@ function eur(cents) {
 // (optionnel) on retire les emojis pour éviter les caractères bizarres
 function stripEmojis(str) {
   if (!str) return "";
-  // enlève la plupart des emojis modernes
   return str.replace(/[\u{1F000}-\u{1FAFF}]/gu, "");
 }
 
@@ -34,7 +33,6 @@ export async function GET(req) {
     let   message     = searchParams.get("message") || "";
     const extrasCSV   = searchParams.get("extrasCSV") || "";
 
-    // Nettoyage éventuel du message perso (pour éviter les emojis cassés)
     message = stripEmojis(message);
 
     const extras = extrasCSV
@@ -52,6 +50,8 @@ export async function GET(req) {
     });
 
     const pageWidth = doc.page.width;
+    const contentX = 60;                         // marge gauche
+    const contentWidth = pageWidth - 2 * 60;     // zone centrale
 
     /* ───── Fond crème ───── */
     doc
@@ -63,16 +63,44 @@ export async function GET(req) {
 
     /* ───── Logo centré ───── */
     try {
-      const logoPath = path.join(process.cwd(), "public", "logo-tykoad.png");
-      const logoBuffer = fs.readFileSync(logoPath);
-      const logoWidth = 90;
-      const logoX = (pageWidth - logoWidth) / 2;
-      const logoY = 60;
+      let logoBuffer = null;
 
-      doc.image(logoBuffer, logoX, logoY, { fit: [logoWidth, logoWidth] });
+      // 1) tentative via le système de fichiers
+      try {
+        const logoPath = path.join(process.cwd(), "public", "logo-tykoad.png");
+        logoBuffer = fs.readFileSync(logoPath);
+      } catch (e) {
+        console.error("Erreur chargement logo via fs:", e);
+      }
+
+      // 2) fallback : via fetch sur l'URL publique
+      if (!logoBuffer) {
+        try {
+          const baseUrl =
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            process.env.SITE_URL ||
+            "https://chalets-tykoad.fr";
+
+          const resLogo = await fetch(`${baseUrl}/logo-tykoad.png`);
+          if (resLogo.ok) {
+            const arrayBuffer = await resLogo.arrayBuffer();
+            logoBuffer = Buffer.from(arrayBuffer);
+          } else {
+            console.error("Erreur fetch logo PDF:", resLogo.status);
+          }
+        } catch (e) {
+          console.error("Erreur chargement logo via fetch:", e);
+        }
+      }
+
+      if (logoBuffer) {
+        const logoWidth = 90;
+        const logoX = (pageWidth - logoWidth) / 2;
+        const logoY = 60;
+        doc.image(logoBuffer, logoX, logoY, { fit: [logoWidth, logoWidth] });
+      }
     } catch (e) {
-      console.error("Erreur chargement logo PDF:", e);
-      // on ignore, le PDF reste utilisable
+      console.error("Erreur globale chargement logo PDF:", e);
     }
 
     let y = 170;
@@ -82,8 +110,9 @@ export async function GET(req) {
       .font("Helvetica-Bold")
       .fontSize(18)
       .fillColor("#374151")
-      .text("CHÈQUE CADEAU", 0, y, {
+      .text("CHÈQUE CADEAU", contentX, y, {
         align: "center",
+        width: contentWidth,
       });
 
     y += 40;
@@ -93,17 +122,17 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#4b5563")
-      .text(`Pour : ${toName}`, 100, y, {
+      .text(`Pour : ${toName}`, contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 22;
 
     doc
-      .text(`Offert par : ${fromName}`, 100, y, {
+      .text(`Offert par : ${fromName}`, contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 35;
@@ -113,21 +142,20 @@ export async function GET(req) {
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#374151")
-      .text("Séjour offert :", 100, y, {
+      .text("Séjour offert :", contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 22;
 
-    // Description du séjour (planLabel + chaletLabel)
     doc
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#4b5563")
-      .text(planLabel, 100, y, {
+      .text(planLabel, contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 20;
@@ -136,9 +164,9 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#4b5563")
-      .text(`Dans le ${chaletLabel}`, 100, y, {
+      .text(`Dans le ${chaletLabel}`, contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 24;
@@ -150,11 +178,11 @@ export async function GET(req) {
         .fillColor("#4b5563")
         .text(
           extras.map((e) => `• ${e}`).join("\n"),
-          100,
+          contentX,
           y,
           {
             align: "center",
-            width: pageWidth - 200,
+            width: contentWidth,
           }
         );
 
@@ -168,11 +196,11 @@ export async function GET(req) {
         .fillColor("#6b7280")
         .text(
           `Valeur du chèque cadeau : ${eur(amountCents)}`,
-          100,
+          contentX,
           y,
           {
             align: "center",
-            width: pageWidth - 200,
+            width: contentWidth,
           }
         );
       y += 28;
@@ -182,7 +210,7 @@ export async function GET(req) {
 
     /* ───── Message personnalisé (optionnel) ───── */
     if (message) {
-      const boxWidth = pageWidth - 200;
+      const boxWidth = contentWidth;
       const textWidth = boxWidth - 30;
       const msg = `« ${message} »`;
 
@@ -191,7 +219,7 @@ export async function GET(req) {
         align: "center",
       }) + 20;
 
-      const boxX = (pageWidth - boxWidth) / 2;
+      const boxX = contentX;
       const boxY = y;
 
       doc
@@ -218,21 +246,21 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#374151")
-      .text(`Code du chèque cadeau : ${code}`, 100, y, {
+      .text(`Code du chèque cadeau : ${code}`, contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 40;
 
-    /* ───── Comment utiliser ce bon (sans emoji) ───── */
+    /* ───── Comment utiliser ce bon ───── */
     doc
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#374151")
-      .text("Comment utiliser ce bon", 100, y, {
+      .text("Comment utiliser ce bon", contentX, y, {
         align: "center",
-        width: pageWidth - 200,
+        width: contentWidth,
       });
 
     y += 28;
@@ -249,28 +277,28 @@ export async function GET(req) {
       .fillColor("#4b5563")
       .text(
         instructions.map((s) => `• ${s}`).join("\n"),
-        120,
+        contentX + 20,
         y,
         {
           align: "left",
-          width: pageWidth - 240,
+          width: contentWidth - 40,
         }
       );
 
     y += instructions.length * 18 + 40;
 
-    /* ───── Phrase de fin / signature (sans emoji) ───── */
+    /* ───── Phrase de fin / signature ───── */
     doc
       .font("Helvetica")
       .fontSize(11.5)
       .fillColor("#374151")
       .text(
         "Nous avons hâte de vous accueillir aux Chalets Ty-Koad pour une parenthèse détente sous les arbres et les bulles du spa.",
-        80,
+        contentX,
         y,
         {
           align: "center",
-          width: pageWidth - 160,
+          width: contentWidth,
         }
       );
 
@@ -280,8 +308,9 @@ export async function GET(req) {
       .font("Helvetica-Oblique")
       .fontSize(11.5)
       .fillColor("#4b5563")
-      .text("Hugo & Nina", 0, y, {
+      .text("Hugo & Nina", contentX, y, {
         align: "center",
+        width: contentWidth,
       });
 
     y += 20;
@@ -290,8 +319,9 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(10.5)
       .fillColor("#9ca3af")
-      .text("Les Chalets Ty-Koad – Laz", 0, y, {
+      .text("Les Chalets Ty-Koad – Laz", contentX, y, {
         align: "center",
+        width: contentWidth,
       });
 
     // Fin du PDF
