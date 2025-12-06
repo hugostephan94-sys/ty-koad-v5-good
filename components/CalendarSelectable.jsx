@@ -88,6 +88,23 @@ export default function CalendarSelectable({
     [when, months]
   );
 
+  const firstVisible = monthsArr[0];
+  const lastVisible = monthsArr[monthsArr.length - 1];
+  const monthRangeLabel =
+    firstVisible.getMonth() === lastVisible.getMonth() &&
+    firstVisible.getFullYear() === lastVisible.getFullYear()
+      ? firstVisible.toLocaleDateString("fr-FR", {
+          month: "long",
+          year: "numeric",
+        })
+      : `${firstVisible.toLocaleDateString("fr-FR", {
+          month: "long",
+          year: "numeric",
+        })} – ${lastVisible.toLocaleDateString("fr-FR", {
+          month: "long",
+          year: "numeric",
+        })}`;
+
   /* ==== Sélection / règles ==== */
   function clearAll() {
     setCheckIn("");
@@ -98,11 +115,11 @@ export default function CalendarSelectable({
     setCheckOut("");
   }
 
-  function *daysGen(ci, n){
+  function* daysGen(ci, n) {
     const d = new Date(ci);
-    for(let i=0;i<n;i++){
+    for (let i = 0; i < n; i++) {
       const dd = new Date(d);
-      dd.setDate(d.getDate()+i);
+      dd.setDate(d.getDate() + i);
       yield dd;
     }
   }
@@ -220,35 +237,48 @@ export default function CalendarSelectable({
         </div>
       </div>
 
-      {/* Navigateur mois */}
-      <div className="flex items-center justify-between mb-3">
-        <button
-          type="button"
-          onClick={() => !prevDisabled && setWhen(addMonths(when, -1))}
-          disabled={prevDisabled}
-          className={`inline-flex items-center justify-center h-8 w-8 rounded-full border border-stone-300 bg-white text-stone-700 text-sm transition 
-            ${
-              prevDisabled
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            }`}
-          aria-label="Mois précédent"
-        >
-          ‹
-        </button>
-
-        <div className="text-xs sm:text-sm text-stone-700 font-medium">
-          {CHALETS[chaletId].name}
+      {/* Navigateur mois – VERSION PLUS EXPLICITE */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="text-xs sm:text-sm text-stone-700">
+          <div className="font-medium">{CHALETS[chaletId].name}</div>
+          <div className="text-[11px] sm:text-xs text-stone-500">
+            {monthRangeLabel}
+            <span className="hidden sm:inline">
+              {" "}
+              • Utilisez les flèches pour changer de mois
+            </span>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setWhen(addMonths(when, 1))}
-          className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-stone-300 bg-white text-stone-700 text-sm hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-          aria-label="Mois suivant"
-        >
-          ›
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => !prevDisabled && setWhen(addMonths(when, -1))}
+            disabled={prevDisabled}
+            className={`inline-flex items-center justify-center px-3 sm:px-4 h-9 sm:h-10 rounded-full border text-xs sm:text-sm font-medium transition
+              ${
+                prevDisabled
+                  ? "border-stone-200 text-stone-300 bg-stone-50 cursor-not-allowed"
+                  : "border-stone-300 bg-white text-stone-700 hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              }`}
+            aria-label="Mois précédent"
+          >
+            <span className="mr-1 text-base sm:text-lg">‹</span>
+            <span className="hidden sm:inline">Mois précédent</span>
+            <span className="inline sm:hidden">Préc.</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setWhen(addMonths(when, 1))}
+            className="inline-flex items-center justify-center px-3 sm:px-4 h-9 sm:h-10 rounded-full border border-stone-300 bg-white text-xs sm:text-sm font-medium text-stone-700 hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+            aria-label="Mois suivant"
+          >
+            <span className="hidden sm:inline">Mois suivant</span>
+            <span className="inline sm:hidden">Suiv.</span>
+            <span className="ml-1 text-base sm:text-lg">›</span>
+          </button>
+        </div>
       </div>
 
       {/* Grille des mois */}
@@ -334,8 +364,7 @@ function Month({
             if (n < (minNights || 1)) tooShort = true;
           }
 
-          const canUseAsCheckout =
-            checkIn && !checkOut && key > checkIn;
+          const canUseAsCheckout = checkIn && !checkOut && key > checkIn;
 
           const disabled =
             (isBusy && !canUseAsCheckout) || isPast || tooShort;
@@ -364,8 +393,7 @@ function Month({
                 "bg-emerald-100 text-emerald-900 border-emerald-300 ";
             }
           } else {
-            classes +=
-              weekendTint + " text-stone-800 border-stone-200 ";
+            classes += weekendTint + " text-stone-800 border-stone-200 ";
           }
 
           if (!disabled && !isSelected) {
