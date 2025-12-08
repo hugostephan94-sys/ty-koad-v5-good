@@ -4,6 +4,9 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// adresse d’expéditeur avec ton domaine vérifié
+const FROM = "Les Chalets Ty-Koad <reservation@chalets-tykoad.fr>";
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -31,7 +34,7 @@ export async function POST(req) {
 
     // 1) Mail pour le client
     await resend.emails.send({
-      from: "Les Chalets Ty-Koad <onboarding@resend.dev>",
+      from: FROM,
       to: email,
       subject: "Confirmation de votre réservation – Les Chalets Ty-Koad",
       text: [
@@ -45,7 +48,15 @@ export async function POST(req) {
         })`,
         price ? `• Montant réglé : ${price} €` : "",
         "",
-        "Nous vous contacterons rapidement avec toutes les infos pratiques (arrivée, spa, options gourmandes…).",
+        "🐣 En option pour votre séjour :",
+        "- Petit déjeuner livré au chalet :",
+        "  https://tally.so/r/npjkGB",
+        "- Plateaux gourmands pour 2 personnes :",
+        "  https://tally.so/r/w4WDWk",
+        "",
+        "Vous pouvez réserver ces options dès maintenant via les liens ci-dessus.",
+        "",
+        "Nous vous contacterons rapidement avec toutes les infos pratiques (arrivée, spa, accès au chalet…).",
         "",
         "À très bientôt à Laz !",
         "Hugo & Nina – Les Chalets Ty-Koad",
@@ -56,8 +67,8 @@ export async function POST(req) {
 
     // 2) Copie pour toi
     await resend.emails.send({
-      from: "Les Chalets Ty-Koad <onboarding@resend.dev>",
-      to: "hugostephan94@gmail.com",
+      from: FROM,
+      to: "hugo@chalets-tykoad.fr", // ou ton Gmail si tu préfères
       subject: "✅ Nouvelle réservation confirmée – Ty-Koad",
       text: [
         "Nouvelle réservation confirmée via le site :",
@@ -68,6 +79,10 @@ export async function POST(req) {
           nights > 1 ? "s" : ""
         })`,
         price ? `Montant payé : ${price} €` : "",
+        "",
+        "Liens options (petits déjeuners / plateaux) envoyés au client :",
+        "Petit déjeuner : https://tally.so/r/npjkGB",
+        "Plateaux : https://tally.so/r/w4WDWk",
       ]
         .filter(Boolean)
         .join("\n"),
