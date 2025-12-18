@@ -1,4 +1,5 @@
 import "./globals.css";
+import SiteFooter from "../components/SiteFooter";
 
 export const metadata = {
   title: "Chalets Ty-Koad — Spa privatif en Bretagne",
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
       >
         <div
           className="
+            min-h-[calc(100vh-4rem)]
             max-w-6xl
             mx-auto
             px-4
@@ -53,9 +55,12 @@ export default function RootLayout({ children }) {
             lg:px-8
             py-4
             sm:py-6
+            flex
+            flex-col
           "
         >
-          {children}
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
         </div>
       </body>
     </html>
