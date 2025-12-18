@@ -1,6 +1,7 @@
 // app/api/send-confirmation/route.js
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { upsertReservationByPI } from "../../../utils/server-db";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -18,6 +19,9 @@ export async function POST(req) {
       chalet,
       nights,
       price,
+
+      // ✅ ID PaymentIntent de réservation
+      paymentIntentId,
     } = body;
 
     if (!email || !checkin || !checkout || !chalet) {
@@ -27,10 +31,31 @@ export async function POST(req) {
       );
     }
 
+    // ✅ Montant caution selon chalet
+    const depositAmount = String(chalet).toUpperCase() === "C2" ? 300 : 150;
+
     const chaletLabel =
-      chalet === "C2"
+      String(chalet).toUpperCase() === "C2"
         ? "Ty-Koad Duo — spa privatif"
         : "Ty-Koad — 2 chambres / 2 SDB";
+
+    // ✅ Mise à jour DB (email/prénom/dates) via PI
+    if (paymentIntentId) {
+      await upsertReservationByPI({
+        paymentIntentId,
+        status: "paid",
+        email,
+        firstname,
+        ci: checkin,
+        co: checkout,
+        chalet,
+        nights,
+      });
+    } else {
+      console.warn(
+        "[send-confirmation] paymentIntentId manquant, DB non mise à jour"
+      );
+    }
 
     // 1) Mail pour le client
     await resend.emails.send({
@@ -47,6 +72,10 @@ export async function POST(req) {
           nights > 1 ? "s" : ""
         })`,
         price ? `• Montant réglé : ${price} €` : "",
+        "",
+        "🔒 Caution (empreinte bancaire)",
+        `• Montant : ${depositAmount} € (aucun débit immédiat)`,
+        "• Vous recevrez automatiquement un lien par e-mail 24h avant votre arrivée pour valider la caution.",
         "",
         "🐣 En option pour votre séjour :",
         "- Petit déjeuner livré au chalet :",
@@ -68,7 +97,7 @@ export async function POST(req) {
     // 2) Copie pour toi
     await resend.emails.send({
       from: FROM,
-      to: "hugo@chalets-tykoad.fr", // ou ton Gmail si tu préfères
+      to: "hugo@chalets-tykoad.fr",
       subject: "✅ Nouvelle réservation confirmée – Ty-Koad",
       text: [
         "Nouvelle réservation confirmée via le site :",
@@ -79,8 +108,10 @@ export async function POST(req) {
           nights > 1 ? "s" : ""
         })`,
         price ? `Montant payé : ${price} €` : "",
+        `Caution (empreinte) : ${depositAmount} €`,
+        paymentIntentId ? `PaymentIntent : ${paymentIntentId}` : "",
         "",
-        "Liens options (petits déjeuners / plateaux) envoyés au client :",
+        "Liens options envoyés au client :",
         "Petit déjeuner : https://tally.so/r/npjkGB",
         "Plateaux : https://tally.so/r/w4WDWk",
       ]

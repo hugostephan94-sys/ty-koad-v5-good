@@ -92,6 +92,10 @@ function CheckoutShell() {
             nights,
             giftCode: giftCode || undefined,
             giftValueCents: giftValueCents || undefined,
+
+            // ✅ on stocke dès la création du PI (réservation pending)
+            firstname: firstname || undefined,
+            email: (emailFromUrl || "").trim() || undefined,
           }),
         });
 
@@ -135,7 +139,6 @@ function CheckoutShell() {
         amountCents={amountCents}
         giftCode={giftCode}
         firstname={firstname}
-        // email initial (souvent vide, mais au cas où)
         initialEmail={emailFromUrl}
         checkin={ci}
         checkout={co}
@@ -167,6 +170,9 @@ function CheckoutInner({
   const [error, setError] = useState("");
   const [email, setEmail] = useState(initialEmail || "");
 
+  // ✅ Montant caution selon chalet
+  const depositAmount = (chalet || "").toUpperCase() === "C2" ? 300 : 150;
+
   async function pay() {
     if (!stripe || !elements) return;
 
@@ -178,10 +184,9 @@ function CheckoutInner({
     setStatus("paying");
     setError("");
 
-    const { error: err } = await stripe.confirmPayment({
+    const { error: err, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: "if_required",
-      // on ajoute les infos de facturation pour Stripe
       confirmParams: {
         payment_method_data: {
           billing_details: {
@@ -198,6 +203,9 @@ function CheckoutInner({
       return;
     }
 
+    const piId =
+      paymentIntent?.id || ((clientSecret || "").split("_secret")[0] || "");
+
     // marquer le code cadeau utilisé (si applicable)
     if (giftCode) {
       try {
@@ -211,7 +219,7 @@ function CheckoutInner({
       }
     }
 
-    // envoi des emails (client + admin)
+    // envoi des emails (client + admin) + update DB via paymentIntentId
     try {
       await fetch("/api/send-confirmation", {
         method: "POST",
@@ -224,6 +232,7 @@ function CheckoutInner({
           chalet,
           nights,
           price: (amountCents / 100).toFixed(2),
+          paymentIntentId: piId,
         }),
       });
     } catch (e) {
@@ -232,12 +241,6 @@ function CheckoutInner({
 
     setStatus("done");
 
-    // On récupère un id de PaymentIntent approximatif depuis le clientSecret
-    // clientSecret ressemble à "pi_xxx_secret_yyy"
-    const piId =
-      (clientSecret || "").split("_secret")[0] || "";
-
-    // Construire l’URL /success avec tous les paramètres
     const params = new URLSearchParams({
       chalet: chalet || "",
       ci: checkin || "",
@@ -249,18 +252,16 @@ function CheckoutInner({
       email: email.trim(),
     });
 
-    // 🔁 Redirection forcée vers /success
     setTimeout(() => {
       window.location.href = `/success?${params.toString()}`;
-    }, 500); // petite pause pour laisser apparaître le message vert
+    }, 500);
   }
 
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 md:p-7 shadow-sm">
       <div className="text-xs sm:text-sm text-stone-600 mb-4 space-y-1">
         <div>
-          Total à payer :{" "}
-          <b className="text-stone-900">{eur(amountCents)}</b>
+          Total à payer : <b className="text-stone-900">{eur(amountCents)}</b>
           {giftCode && " (chèque cadeau appliqué)"}
         </div>
       </div>
@@ -283,6 +284,20 @@ function CheckoutInner({
       <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4 mb-4 text-[11px] sm:text-xs text-stone-600">
         Le paiement est traité par Stripe. Vos coordonnées bancaires ne sont
         jamais stockées par les Chalets Ty-Koad.
+      </div>
+
+      {/* ✅ Encadré caution */}
+      <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4 mb-4 text-[11px] sm:text-xs text-stone-700">
+        <div className="font-medium text-stone-900 mb-1">
+          Caution (empreinte bancaire)
+        </div>
+        <div>
+          Montant : <b>{depositAmount}€</b> — aucun débit immédiat.
+        </div>
+        <div className="mt-1">
+          Vous recevrez automatiquement un lien par e-mail{" "}
+          <b>24h avant votre arrivée</b> pour valider la caution.
+        </div>
       </div>
 
       <div className="space-y-3">

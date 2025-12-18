@@ -34,6 +34,29 @@ model Reservation {
   adults          Int      @default(1)
   children        Int      @default(0)
   status          String   @default("confirmed")
-  paymentIntentId String?  @unique   // ⬅️ NOUVEAU, pour Stripe
+  paymentIntentId String?  @unique   // Stripe paiement réservation
   createdAt       DateTime @default(now())
+
+  // ✅ Lien vers la caution (empreinte bancaire)
+  depositHold     DepositHold?
+}
+
+model DepositHold {
+  id              Int         @id @default(autoincrement())
+  reservationId   Int         @unique
+  reservation     Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  amountCents     Int
+  tokenHash       String      @unique
+  tokenExpiresAt  DateTime
+  emailSentAt     DateTime?
+
+  paymentIntentId String?     @unique
+  status          String      @default("pending") // pending|requires_capture|captured|canceled|failed
+  authorizedAt    DateTime?
+  capturedAt      DateTime?
+  canceledAt      DateTime?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }

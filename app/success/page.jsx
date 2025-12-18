@@ -1,3 +1,4 @@
+// app/success/page.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -28,39 +29,22 @@ function toEUR(n) {
 export default function SuccessPage() {
   const q = useQuery();
 
-  // Enregistrement silencieux de la réservation en DB
-  useEffect(() => {
-    if (!q.chalet || !q.ci || !q.co) return;
-
-    (async () => {
-      try {
-        await fetch("/api/reservations/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chalet: q.chalet,
-            ci: q.ci,
-            co: q.co,
-            firstname: q.name || "",
-            email: q.email || "",
-            adults: q.adults ? Number(q.adults) : 2,
-            children: q.children ? Number(q.children) : 0,
-            status: "confirmed",
-            // tu peux rajouter d’autres champs si ton saveReservation les gère
-            // amount: q.amount ? Number(q.amount) : undefined,
-            // pi: q.pi,
-          }),
-        });
-      } catch (e) {
-        console.error("Erreur enregistrement réservation :", e);
-      }
-    })();
-  }, [q.chalet, q.ci, q.co, q.name, q.email, q.adults, q.children]);
+  // ✅ Plus besoin d'enregistrer la réservation ici :
+  // - create-payment-intent crée la réservation "pending" avec email/prénom
+  // - webhook la passe en paid/failed
+  // - send-confirmation complète/valide au besoin
+  useEffect(() => {}, []);
 
   const amountText =
-    q.amount && !isNaN(Number(q.amount))
-      ? toEUR(q.amount)
-      : "—";
+    q.amount && !isNaN(Number(q.amount)) ? toEUR(q.amount) : "—";
+
+  const depositAmount =
+    (q.chalet || "").toUpperCase() === "C2" ? 300 : 150;
+
+  const chaletLabel =
+    (q.chalet || "").toUpperCase() === "C2"
+      ? "Ty-Koad Duo — spa privatif"
+      : "Ty-Koad — 2 chambres / 2 SDB";
 
   return (
     <>
@@ -81,11 +65,26 @@ export default function SuccessPage() {
               . Pensez à vérifier vos spams si vous ne le voyez pas.
             </p>
 
+            {/* ✅ Encadré caution */}
+            <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50/60 p-4 text-xs sm:text-sm text-stone-700">
+              <div className="font-medium text-stone-900 mb-1">
+                Caution (empreinte bancaire)
+              </div>
+              <div>
+                Montant : <b>{depositAmount}€</b> — aucun débit immédiat
+                (empreinte bancaire).
+              </div>
+              <div className="mt-1">
+                Vous recevrez automatiquement un lien par e-mail{" "}
+                <b>24h avant votre arrivée</b> pour valider la caution.
+              </div>
+            </div>
+
             {/* Détails réservation */}
             <div className="mt-6 grid gap-4 sm:grid-cols-2 text-xs sm:text-sm">
               <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
                 <div className="font-medium mb-1">Détails du séjour</div>
-                <div>Chalet : {q.chalet || "—"}</div>
+                <div>Chalet : {chaletLabel}</div>
                 <div>Arrivée : {q.ci || "—"}</div>
                 <div>Départ : {q.co || "—"}</div>
                 <div>Nuits : {q.nights || "—"}</div>
@@ -97,7 +96,7 @@ export default function SuccessPage() {
                 <div>
                   Vous recevrez dans l’e-mail de confirmation toutes les
                   informations utiles pour votre arrivée (accès au chalet,
-                  horaires, etc.).
+                  arrivée autonome via boîte à clé, etc.).
                 </div>
                 {q.name && (
                   <div className="mt-2">

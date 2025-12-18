@@ -46,6 +46,10 @@ function ReserverInner() {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
 
+  // ✅ Coordonnées client (obligatoires)
+  const [firstname, setFirstname] = useState(search.get("firstname") || "");
+  const [email, setEmail] = useState(search.get("email") || "");
+
   // Code cadeau
   const [giftCode, setGiftCode] = useState("");
   const [gift, setGift] = useState(null); // { valueCents, message }
@@ -64,14 +68,8 @@ function ReserverInner() {
   // Ajuste adultes/enfants quand on change de chalet
   useEffect(() => {
     if (totalGuests > maxGuests) {
-      const newAdults = Math.min(
-        adults,
-        Math.max(1, maxGuests - children)
-      );
-      const newChildren = Math.max(
-        0,
-        Math.min(children, maxGuests - newAdults)
-      );
+      const newAdults = Math.min(adults, Math.max(1, maxGuests - children));
+      const newChildren = Math.max(0, Math.min(children, maxGuests - newAdults));
       setAdults(newAdults);
       setChildren(newChildren);
     }
@@ -79,11 +77,10 @@ function ReserverInner() {
   }, [tab]);
 
   // Texte de prix avec prise en compte du code cadeau
-  // state.total est en EUROS -> on convertit en centimes pour appliquer la réduction
   const priceText = useMemo(() => {
     if (!state?.nights) return "";
     const totalEuros = state.total || 0;
-    const totalCents = Math.round(totalEuros * 100); // -> centimes
+    const totalCents = Math.round(totalEuros * 100);
     const netCents = Math.max(0, totalCents - discountCents);
     const netEuros = netCents / 100;
     return eur(netEuros);
@@ -93,11 +90,18 @@ function ReserverInner() {
     totalGuests < 1
       ? "Merci d’indiquer au moins 1 adulte."
       : totalGuests > maxGuests
-      ? `Capacité max : ${maxGuests} personne${
-          maxGuests > 1 ? "s" : ""
-        }`
+      ? `Capacité max : ${maxGuests} personne${maxGuests > 1 ? "s" : ""}`
       : adults < 1
       ? "Au moins 1 adulte requis."
+      : "";
+
+  // ✅ validation coordonnées
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || "").trim());
+  const contactError =
+    !firstname.trim()
+      ? "Merci d’indiquer votre prénom."
+      : !emailOk
+      ? "Merci d’indiquer une adresse e-mail valide."
       : "";
 
   async function applyGift() {
@@ -137,7 +141,7 @@ function ReserverInner() {
   function goPay() {
     const { checkIn, checkOut, nights, total } = state;
 
-    // total est en EUROS -> on passe en centimes pour appliquer la réduction
+    // total en EUROS -> centimes pour réduction
     const totalEuros = total || 0;
     const totalCents = Math.round(totalEuros * 100);
     const netCents = Math.max(0, totalCents - discountCents);
@@ -154,16 +158,23 @@ function ReserverInner() {
 
       adults: String(adults),
       children: String(children),
+
+      // ✅ on passe les coordonnées à /payer
+      firstname: firstname.trim(),
+      email: email.trim(),
+
       ...(gift
         ? {
             giftCode: giftCode.trim().toUpperCase(),
-            giftValue: String(discountCents), // on laisse en centimes dans l’URL
+            giftValue: String(discountCents),
           }
         : {}),
     }).toString();
 
     window.location.assign(`/payer?${q}`);
   }
+
+  const canGoPay = !!state?.valid && !peopleError && !contactError;
 
   return (
     <section className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
@@ -205,6 +216,40 @@ function ReserverInner() {
           </div>
         </div>
 
+        {/* Coordonnées */}
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-stone-600">
+            Vos coordonnées (pour la confirmation)
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-600 mb-1">Prénom</label>
+              <input
+                value={firstname}
+                onChange={(e) => setFirstname(e.target.value)}
+                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="ex : Hugo"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-stone-600 mb-1">E-mail</label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="ex : prenom.nom@email.com"
+              />
+            </div>
+          </div>
+
+          {contactError && (
+            <div className="text-xs sm:text-sm text-red-700">{contactError}</div>
+          )}
+        </div>
+
         {/* Capacité */}
         <div className="space-y-2">
           <div className="text-xs font-medium text-stone-600">
@@ -224,13 +269,11 @@ function ReserverInner() {
                 }}
                 className="rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
-                {Array.from({ length: maxGuests }, (_, i) => i + 1).map(
-                  (n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  )
-                )}
+                {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex items-center gap-2">
@@ -259,9 +302,7 @@ function ReserverInner() {
             </div>
           </div>
           {peopleError && (
-            <div className="text-xs sm:text-sm text-red-700">
-              {peopleError}
-            </div>
+            <div className="text-xs sm:text-sm text-red-700">{peopleError}</div>
           )}
         </div>
 
@@ -319,6 +360,21 @@ function ReserverInner() {
             )}
           </div>
 
+          {/* ✅ Caution (empreinte bancaire) */}
+          <div className="rounded-2xl border border-stone-200 bg-stone-50/60 p-4 text-xs sm:text-sm text-stone-700">
+            <div className="font-medium text-stone-900 mb-1">
+              Caution (empreinte bancaire)
+            </div>
+            <div>
+              Montant : <b>{tab === "C2" ? "300€" : "150€"}</b> — aucun débit
+              immédiat (empreinte bancaire).
+            </div>
+            <div className="mt-1">
+              Vous recevrez automatiquement un lien par e-mail{" "}
+              <b>24h avant votre arrivée</b> pour valider la caution.
+            </div>
+          </div>
+
           {/* Résumé / bouton payer */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 text-xs sm:text-sm text-stone-700">
@@ -347,9 +403,9 @@ function ReserverInner() {
             <button
               type="button"
               onClick={goPay}
-              disabled={!state?.valid || !!peopleError}
+              disabled={!canGoPay}
               className={`inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm sm:text-base font-medium shadow-sm transition w-full sm:w-auto ${
-                !state?.valid || !!peopleError
+                !canGoPay
                   ? "bg-stone-200 text-stone-500 cursor-not-allowed"
                   : "bg-emerald-900 text-white hover:bg-emerald-800"
               }`}

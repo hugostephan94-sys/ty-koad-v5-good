@@ -1,5 +1,6 @@
+// app/api/stripe/create-payment-intent/route.js
 import Stripe from "stripe";
-import { saveReservation } from "../../../utils/server-db";
+import { upsertReservationByPI } from "../../../utils/server-db";
 
 export async function POST(req) {
   try {
@@ -12,6 +13,12 @@ export async function POST(req) {
       depositCents,
       giftCode,
       giftValueCents,
+
+      // (optionnel si tu les ajoutes plus tard côté front)
+      adults,
+      children,
+      firstname,
+      email,
     } = await req.json();
 
     // Montant en centimes (min 0,50 €)
@@ -30,10 +37,11 @@ export async function POST(req) {
 
     // 1) Créer le PaymentIntent Stripe
     const intent = await stripe.paymentIntents.create({
-      amount: Math.round(amount), // déjà en centimes
+      amount: Math.round(amount),
       currency: "eur",
       automatic_payment_methods: { enabled: true },
       metadata: {
+        purpose: "booking_payment", // ✅ utile pour distinguer du dépôt si besoin
         chalet,
         ci,
         co,
@@ -45,18 +53,18 @@ export async function POST(req) {
       },
     });
 
-    // 2) Enregistrer une réservation "en attente" liée à ce PaymentIntent
-    await saveReservation({
+    // 2) Enregistrer / mettre à jour la réservation "pending" liée à ce PaymentIntent
+    // ✅ On ne stocke en DB que ce qui existe dans ton model Reservation
+    await upsertReservationByPI({
       paymentIntentId: intent.id,
-      status: "pending",          // 🔹 passera à "paid" via le webhook
+      status: "pending", // passera à "paid" via webhook
       chalet,
-      checkIn: ci,
-      checkOut: co,
-      nights,
-      amountCents: Math.round(amount),
-      depositCents: Number(depositCents || 0),
-      giftCode: giftCode || null,
-      giftValueCents: giftValueCents || 0,
+      ci,
+      co,
+      firstname: firstname || undefined,
+      email: email || undefined,
+      adults: typeof adults === "number" ? adults : 1,
+      children: typeof children === "number" ? children : 0,
     });
 
     // 3) Retourner le clientSecret au front
