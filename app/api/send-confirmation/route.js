@@ -1,7 +1,7 @@
 // app/api/send-confirmation/route.js
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { upsertReservationByPI } from "../../../utils/server-db";
+import { upsertReservationByPI } from "../../utils/server-db";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

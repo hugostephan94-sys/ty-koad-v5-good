@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import prisma from "../../../../../lib/db";
+import prisma from "../../../../lib/db";
 import { Resend } from "resend";
-import { CHALETS } from "../../../../../lib/chalets";
+import { CHALETS } from "../../../../lib/chalets";
 
 function assertCron(req) {
   const auth = req.headers.get("authorization") || "";

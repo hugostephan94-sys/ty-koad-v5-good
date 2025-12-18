@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import prisma from "../../../../../lib/db";
+import prisma from "../../../../lib/db";
 
 function assertCron(req) {
   const auth = req.headers.get("authorization") || "";
