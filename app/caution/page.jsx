@@ -14,24 +14,28 @@ function eurFromCents(cents) {
 }
 
 function getDepositCentsByChalet(chalet) {
-  // C1 = Cosy / 2 chambres ? (dans ton projet C1 = "Ty-Koad — 2 chambres / 2 SDB")
-  // C2 = Duo spa
-  if (chalet === "C2") return 30000; // 300€
-  if (chalet === "C1") return 15000; // 150€
+  if (chalet === "C2") return 30000; // Ty-Koad Duo (spa)
+  if (chalet === "C1") return 15000; // Ty-Koad (cosy)
   return 0;
+}
+
+function getChaletLabel(chalet) {
+  if (chalet === "C2") return "Ty-Koad Duo — spa privatif";
+  if (chalet === "C1") return "Ty-Koad — 2 chambres / 2 SDB";
+  return "Les Chalets Ty-Koad";
 }
 
 function CautionInner() {
   const search = useSearchParams();
-
   const chalet = (search.get("chalet") || "").toUpperCase(); // C1 / C2 / ""
-  const chaletLabel =
-    chalet === "C2"
-      ? "Ty-Koad Duo — spa privatif"
-      : chalet === "C1"
-      ? "Ty-Koad — 2 chambres / 2 SDB"
-      : "Les Chalets Ty-Koad";
 
+  const chaletLabel = getChaletLabel(chalet);
+
+  // Montants fixes (affichés même si aucun chalet n'est précisé)
+  const depositC1 = getDepositCentsByChalet("C1");
+  const depositC2 = getDepositCentsByChalet("C2");
+
+  // Si on connaît le chalet, on met en avant le bon montant
   const depositCents = getDepositCentsByChalet(chalet);
 
   return (
@@ -43,9 +47,9 @@ function CautionInner() {
           </h1>
 
           <p className="mt-2 text-sm sm:text-base text-stone-700">
-            Pour le séjour <b>{chaletLabel}</b>, une caution peut être demandée
-            afin de couvrir d’éventuelles dégradations, manquements, pertes ou
-            frais de remise en état constatés après votre départ.
+            Une caution (dépôt de garantie) peut être demandée afin de couvrir
+            d’éventuelles dégradations, pertes, manquements ou frais de remise en
+            état constatés après votre départ.
           </p>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 text-xs sm:text-sm">
@@ -53,7 +57,7 @@ function CautionInner() {
               <div className="font-medium mb-2">Comment ça fonctionne ?</div>
               <ul className="list-disc pl-4 space-y-1 text-stone-700">
                 <li>
-                  La caution se fait généralement via une{" "}
+                  La caution est effectuée via une{" "}
                   <b>empreinte bancaire (pré-autorisation)</b>.
                 </li>
                 <li>
@@ -62,40 +66,35 @@ function CautionInner() {
                 </li>
                 <li>
                   En cas de problème, un montant peut être retenu (partiellement
-                  ou totalement) avec justificatifs si besoin.
+                  ou totalement) selon les conditions de location.
                 </li>
               </ul>
             </div>
 
             <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
-              <div className="font-medium mb-2">Montant de la caution</div>
+              <div className="font-medium mb-2">Montant</div>
 
-              {chalet === "C1" || chalet === "C2" ? (
-                <div className="text-stone-700">
-                  Caution :{" "}
-                  <b className="text-stone-900">
-                    {eurFromCents(depositCents)}
-                  </b>
-                </div>
+              {depositCents > 0 ? (
+                <>
+                  <div className="text-stone-700">
+                    Séjour : <b className="text-stone-900">{chaletLabel}</b>
+                  </div>
+                  <div className="mt-1 text-stone-700">
+                    Caution :{" "}
+                    <b className="text-stone-900">
+                      {eurFromCents(depositCents)}
+                    </b>
+                  </div>
+                </>
               ) : (
                 <div className="text-stone-700 space-y-1">
                   <div>
-                    <b>Ty-Koad Cosy</b> : <b>150 €</b>
+                    <b>Ty-Koad Cosy</b> :{" "}
+                    <b className="text-stone-900">{eurFromCents(depositC1)}</b>
                   </div>
                   <div>
-                    <b>Ty-Koad Duo (spa)</b> : <b>300 €</b>
-                  </div>
-                  <div className="mt-2 text-stone-600">
-                    Astuce : tu peux afficher automatiquement le bon montant en
-                    venant sur cette page avec{" "}
-                    <code className="px-1 py-0.5 rounded bg-white border border-stone-200">
-                      ?chalet=C1
-                    </code>{" "}
-                    ou{" "}
-                    <code className="px-1 py-0.5 rounded bg-white border border-stone-200">
-                      ?chalet=C2
-                    </code>
-                    .
+                    <b>Ty-Koad Duo (spa)</b> :{" "}
+                    <b className="text-stone-900">{eurFromCents(depositC2)}</b>
                   </div>
                 </div>
               )}
@@ -107,8 +106,8 @@ function CautionInner() {
               Quand est-elle demandée ?
             </div>
             <div>
-              La caution est demandée avant l’arrivée (souvent par lien envoyé
-              automatiquement), puis libérée après le départ si tout est OK.
+              La caution est demandée avant l’arrivée et est libérée après le
+              départ si tout est conforme.
             </div>
           </div>
 
@@ -134,9 +133,8 @@ function CautionInner() {
           </div>
 
           <p className="mt-4 text-[11px] text-stone-500">
-            Cette page est informative. Les modalités exactes (montant, délai de
-            libération, cas de retenue) sont précisées dans les CGV et/ou les
-            conditions de location.
+            Les modalités exactes (délai de libération, cas de retenue, etc.)
+            sont détaillées dans les CGV et/ou les conditions de location.
           </p>
         </div>
       </section>
