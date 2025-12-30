@@ -12,23 +12,17 @@ import {
 } from "@stripe/react-stripe-js";
 import SiteHeader from "../../components/SiteHeader";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-function eur(n) {
-  // n est en CENTIMES ici
-  return (n / 100).toLocaleString("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  });
+function eur(cents) {
+  const n = Number(cents || 0);
+  return (n / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 }
 
 export default function PayerPage() {
   return (
     <>
       <SiteHeader />
-
       <main className="pt-4 sm:pt-6 md:pt-10 pb-12 md:pb-16">
         <section className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           <header>
@@ -36,8 +30,7 @@ export default function PayerPage() {
               Paiement sécurisé
             </h1>
             <p className="mt-2 text-sm sm:text-base text-stone-700">
-              Finalisez votre réservation en réglant le montant indiqué
-              ci-dessous. Le paiement est sécurisé via Stripe 🔒
+              Finalisez votre réservation. Le paiement est sécurisé via Stripe 🔒
             </p>
           </header>
 
@@ -56,27 +49,26 @@ export default function PayerPage() {
   );
 }
 
-/**
- * Récupère le clientSecret via l’API puis installe <Elements>
- */
 function CheckoutShell() {
   const search = useSearchParams();
 
-  // montant passé en € dans l’URL => on repasse en centimes
-  const amountCents = Math.round(Number(search.get("amount") || 0) * 100);
-  const chalet = search.get("chalet");
-  const ci = search.get("ci");
-  const co = search.get("co");
+  const chalet = (search.get("chalet") || "").toUpperCase();
+  const ci = search.get("ci") || "";
+  const co = search.get("co") || "";
   const nights = Number(search.get("nights") || 0);
-  const giftCode = search.get("giftCode") || "";
-  const giftValueCents = Number(search.get("giftValue") || 0);
 
-  // infos client éventuellement passées dans l’URL
+  const adults = Number(search.get("adults") || 1);
+  const children = Number(search.get("children") || 0);
+
+  const giftCode = (search.get("giftCode") || "").trim().toUpperCase();
   const firstname = search.get("firstname") || "";
   const emailFromUrl = search.get("email") || "";
 
   const [clientSecret, setClientSecret] = useState(null);
+  const [amountCents, setAmountCents] = useState(null);
+  const [breakdown, setBreakdown] = useState(null);
   const [fetchError, setFetchError] = useState("");
+  const [freeProcessing, setFreeProcessing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -85,15 +77,13 @@ function CheckoutShell() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amountCents,
             chalet,
             ci,
             co,
             nights,
+            adults,
+            children,
             giftCode: giftCode || undefined,
-            giftValueCents: giftValueCents || undefined,
-
-            // ✅ on stocke dès la création du PI (réservation pending)
             firstname: firstname || undefined,
             email: (emailFromUrl || "").trim() || undefined,
           }),
@@ -101,16 +91,61 @@ function CheckoutShell() {
 
         const data = await res.json();
 
-        if (!res.ok || !data.clientSecret) {
-          setFetchError(
-            data.error || "Erreur lors de la préparation du paiement."
-          );
+        if (!res.ok) {
+          setFetchError(data.error || "Erreur lors de la préparation du paiement.");
           return;
         }
 
+        setBreakdown(data.breakdown || null);
+        setAmountCents(typeof data.amountCents === "number" ? data.amountCents : 0);
+
+        // ✅ CAS GRATUIT : on envoie direct la confirmation + redirect success
+        if (data.free) {
+          setFreeProcessing(true);
+
+          const paymentIntentId = data.paymentIntentId || "";
+          try {
+            await fetch("/api/send-confirmation", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: (emailFromUrl || "").trim(),
+                firstname,
+                checkin: ci,
+                checkout: co,
+                chalet,
+                nights,
+                price: "0.00",
+                paymentIntentId, // FREE_...
+              }),
+            });
+          } catch {
+            // on n'empêche pas la redirection
+          }
+
+          const params = new URLSearchParams({
+            chalet: chalet || "",
+            ci: ci || "",
+            co: co || "",
+            nights: String(nights || 0),
+            amount: "0.00",
+            pi: paymentIntentId,
+            name: firstname || "",
+            email: (emailFromUrl || "").trim(),
+          });
+
+          window.location.href = `/success?${params.toString()}`;
+          return;
+        }
+
+        // ✅ CAS STRIPE normal
+        if (!data.clientSecret) {
+          setFetchError("clientSecret manquant.");
+          return;
+        }
         setClientSecret(data.clientSecret);
       } catch (e) {
-        setFetchError(e.message || "Erreur réseau.");
+        setFetchError(e?.message || "Erreur réseau.");
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,7 +159,16 @@ function CheckoutShell() {
     );
   }
 
-  if (!clientSecret) {
+  if (freeProcessing) {
+    return (
+      <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 text-sm text-stone-700 shadow-sm">
+        Votre chèque cadeau couvre 100% du séjour ✅<br />
+        Confirmation en cours…
+      </div>
+    );
+  }
+
+  if (!clientSecret || amountCents === null) {
     return (
       <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 text-sm text-stone-700 shadow-sm">
         Préparation du paiement…
@@ -137,6 +181,7 @@ function CheckoutShell() {
       <CheckoutInner
         clientSecret={clientSecret}
         amountCents={amountCents}
+        breakdown={breakdown}
         giftCode={giftCode}
         firstname={firstname}
         initialEmail={emailFromUrl}
@@ -149,12 +194,10 @@ function CheckoutShell() {
   );
 }
 
-/**
- * Affiche PaymentElement et gère le bouton "Payer"
- */
 function CheckoutInner({
   clientSecret,
   amountCents,
+  breakdown,
   giftCode,
   firstname,
   initialEmail,
@@ -166,11 +209,10 @@ function CheckoutInner({
   const stripe = useStripe();
   const elements = useElements();
 
-  const [status, setStatus] = useState("ready"); // ready | paying | done | error
+  const [status, setStatus] = useState("ready");
   const [error, setError] = useState("");
   const [email, setEmail] = useState(initialEmail || "");
 
-  // ✅ Montant caution selon chalet
   const depositAmount = (chalet || "").toUpperCase() === "C2" ? 300 : 150;
 
   async function pay() {
@@ -189,10 +231,7 @@ function CheckoutInner({
       redirect: "if_required",
       confirmParams: {
         payment_method_data: {
-          billing_details: {
-            email: email.trim(),
-            name: firstname || undefined,
-          },
+          billing_details: { email: email.trim(), name: firstname || undefined },
         },
       },
     });
@@ -206,20 +245,8 @@ function CheckoutInner({
     const piId =
       paymentIntent?.id || ((clientSecret || "").split("_secret")[0] || "");
 
-    // marquer le code cadeau utilisé (si applicable)
-    if (giftCode) {
-      try {
-        await fetch("/api/gift/consume", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: giftCode }),
-        });
-      } catch {
-        // on ignore pour ne pas bloquer le client
-      }
-    }
+    // ✅ Plus de /api/gift/consume ici : c'est le webhook Stripe qui consomme le cadeau
 
-    // envoi des emails (client + admin) + update DB via paymentIntentId
     try {
       await fetch("/api/send-confirmation", {
         method: "POST",
@@ -235,9 +262,7 @@ function CheckoutInner({
           paymentIntentId: piId,
         }),
       });
-    } catch (e) {
-      console.error("Erreur envoi email:", e);
-    }
+    } catch {}
 
     setStatus("done");
 
@@ -262,11 +287,25 @@ function CheckoutInner({
       <div className="text-xs sm:text-sm text-stone-600 mb-4 space-y-1">
         <div>
           Total à payer : <b className="text-stone-900">{eur(amountCents)}</b>
-          {giftCode && " (chèque cadeau appliqué)"}
+          {giftCode ? " (chèque cadeau appliqué)" : ""}
         </div>
+
+        {breakdown ? (
+          <div className="mt-2 text-[11px] sm:text-xs text-stone-500 space-y-0.5">
+            <div>Prix de base : {eur(breakdown.baseTotalCents || 0)}</div>
+            {(breakdown.autoDiscountCents || 0) > 0 ? (
+              <div>
+                {breakdown.autoDiscountLabel || "Remise automatique"} : −
+                {eur(breakdown.autoDiscountCents)}
+              </div>
+            ) : null}
+            {(breakdown.giftCents || 0) > 0 ? (
+              <div>Code cadeau : −{eur(breakdown.giftCents)}</div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {/* Champ e-mail obligatoire */}
       <div className="mb-4">
         <label className="block text-xs sm:text-sm text-stone-700 mb-1">
           Adresse e-mail pour la confirmation de réservation
@@ -282,28 +321,24 @@ function CheckoutInner({
       </div>
 
       <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4 mb-4 text-[11px] sm:text-xs text-stone-600">
-        Le paiement est traité par Stripe. Vos coordonnées bancaires ne sont
-        jamais stockées par les Chalets Ty-Koad.
+        Le paiement est traité par Stripe. Vos coordonnées bancaires ne sont jamais
+        stockées par les Chalets Ty-Koad.
       </div>
 
-      {/* ✅ Encadré caution */}
       <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4 mb-4 text-[11px] sm:text-xs text-stone-700">
-        <div className="font-medium text-stone-900 mb-1">
-          Caution (empreinte bancaire)
-        </div>
+        <div className="font-medium text-stone-900 mb-1">Caution (empreinte bancaire)</div>
         <div>
           Montant : <b>{depositAmount}€</b> — aucun débit immédiat.
         </div>
         <div className="mt-1">
-          Vous recevrez automatiquement un lien par e-mail{" "}
-          <b>24h avant votre arrivée</b> pour valider la caution.
+          Vous recevrez automatiquement un lien par e-mail <b>24h avant votre arrivée</b>.
         </div>
       </div>
 
       <div className="space-y-3">
         <PaymentElement />
-
         <button
+          type="button"
           onClick={pay}
           disabled={status !== "ready"}
           className="w-full inline-flex items-center justify-center mt-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm sm:text-base font-medium shadow-sm disabled:bg-stone-200 disabled:text-stone-500 disabled:cursor-not-allowed transition"
@@ -312,14 +347,12 @@ function CheckoutInner({
         </button>
       </div>
 
-      {status === "done" && (
-        <div className="mt-3 text-sm text-emerald-800">
-          Merci ! Votre paiement est confirmé ✅
-        </div>
-      )}
-      {status === "error" && (
+      {status === "done" ? (
+        <div className="mt-3 text-sm text-emerald-800">Merci ! Votre paiement est confirmé ✅</div>
+      ) : null}
+      {status === "error" ? (
         <div className="mt-3 text-sm text-red-700">{error}</div>
-      )}
+      ) : null}
     </div>
   );
 }

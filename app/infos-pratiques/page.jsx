@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
+import CommercialBand from "../../components/CommercialBand";
 
 export default function InfosPratiquesPage() {
   return (
@@ -17,6 +18,11 @@ export default function InfosPratiquesPage() {
               Tout pour préparer sereinement votre séjour aux{" "}
               <strong>Chalets Ty-Koad</strong>.
             </p>
+
+            {/* ✅ Bandeau commercial compact */}
+            <div className="mt-4">
+              <CommercialBand compact />
+            </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
@@ -39,6 +45,45 @@ export default function InfosPratiquesPage() {
               </Link>
             </div>
           </header>
+
+          {/* ✅ OPTIONS (vendeur + utile) */}
+          <div className="bg-white rounded-3xl border border-stone-200 p-5 sm:p-6 md:p-7 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-semibold">
+              Options gourmandes 🍽️
+            </h2>
+            <p className="mt-2 text-sm text-stone-700">
+              Envie de vous faire plaisir ? Petit déjeuner livré au chalet ou
+              plateau gourmand… on s’occupe de tout 💚
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href="https://tally.so/r/npjkGB"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm transition"
+              >
+                Commander un petit déjeuner 🐣
+              </a>
+              <a
+                href="https://tally.so/r/w4WDWk"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-stone-300 text-sm font-medium text-stone-800 hover:border-emerald-500 hover:text-emerald-900 transition"
+              >
+                Voir les plateaux gourmands 🧀
+              </a>
+              <Link
+                href="/cadeau"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-stone-300 text-sm font-medium text-stone-800 hover:border-emerald-500 hover:text-emerald-900 transition"
+              >
+                Offrir un chèque cadeau 🎁
+              </Link>
+            </div>
+            <p className="mt-3 text-[11px] text-stone-500">
+              Astuce : vous pouvez préparer vos options à l’avance, même avant
+              l’arrivée.
+            </p>
+          </div>
 
           {/* CARTES */}
           <div className="grid gap-6 md:gap-8 md:grid-cols-2 items-start">
@@ -218,124 +263,6 @@ export default function InfosPratiquesPage() {
                 En cas de débit, un justificatif (photos, facture, intervention)
                 pourra être fourni sur demande.
               </p>
-            </div>
-
-            {/* ANNULATION */}
-            <div className="md:col-span-2 bg-white rounded-3xl border border-stone-200 p-5 sm:p-6 md:p-7 shadow-sm">
-              <h2 className="text-xl sm:text-2xl font-semibold">
-                Annulation
-              </h2>
-              <ul className="mt-3 text-sm text-stone-700 list-disc list-inside space-y-1">
-                <li>
-                  <strong>Annulation gratuite</strong> jusqu’à{" "}
-                  <strong>7 jours</strong> avant la date d’arrivée.
-                </li>
-                <li>
-                  Passé ce délai (moins de 7 jours avant l’arrivée), le montant
-                  total de la réservation peut être dû.
-                </li>
-                <li>
-                  En cas de <strong>non-présentation</strong>, la réservation est
-                  due.
-                </li>
-              </ul>
-              <p className="mt-3 text-xs text-stone-500">
-                Réservation via plateforme : les conditions de la plateforme
-                peuvent s’appliquer.
-              </p>
-            </div>
-
-            {/* TARIFS */}
-            <div className="md:col-span-2 bg-white rounded-3xl border border-stone-200 p-5 sm:p-6 md:p-7 shadow-sm">
-              <h2 className="text-xl sm:text-2xl font-semibold">Tarifs</h2>
-              <div className="mt-3 grid gap-6 md:grid-cols-2 text-sm text-stone-700">
-                <div>
-                  <h3 className="text-base font-semibold">
-                    Ty-Koad Duo — spa privatif (2 pers.)
-                  </h3>
-                  <ul className="mt-2 list-disc list-inside space-y-1">
-                    <li>
-                      <strong>110 €</strong> / nuit (dimanche → jeudi)
-                    </li>
-                    <li>
-                      <strong>130 €</strong> / nuit (vendredi &amp; samedi)
-                    </li>
-                    <li>
-                      <em>Minimum 1 nuit</em>
-                    </li>
-                    <li>Accès spa privatif pendant le séjour</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold">
-                    Ty-Koad — 2 chambres / 2 SDB
-                  </h3>
-                  <ul className="mt-2 list-disc list-inside space-y-1">
-                    <li>
-                      <strong>70 €</strong> / nuit
-                    </li>
-                    <li>
-                      <em>Minimum 2 nuits</em>
-                    </li>
-                    <li>Jusqu’à 4 personnes</li>
-                  </ul>
-                </div>
-              </div>
-
-              <p className="mt-4 text-xs text-stone-500">
-                Les tarifs peuvent varier selon la période, les offres et la
-                plateforme. Référez-vous au prix affiché au moment de la
-                réservation.
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  href="/reserver"
-                  className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm transition"
-                >
-                  Réserver votre séjour
-                </Link>
-              </div>
-            </div>
-
-            {/* ENVIES SPÉCIALES */}
-            <div className="md:col-span-2 bg-white rounded-3xl border border-stone-200 p-5 sm:p-6 md:p-7 shadow-sm">
-              <h3 className="text-lg sm:text-xl font-semibold">Envies spéciales</h3>
-              <p className="mt-2 text-sm text-stone-700">
-                Anniversaire, déco romantique, petite attention, surprise
-                gourmande… dites-le-nous : nous ferons au mieux pour personnaliser
-                votre séjour 💚
-              </p>
-            </div>
-
-            {/* LIENS */}
-            <div className="md:col-span-2 rounded-3xl border border-stone-200 bg-stone-50/60 p-5 sm:p-6 md:p-7">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="text-sm text-stone-700">
-                  Besoin de tout vérifier ? <span className="font-medium">CGV</span>,{" "}
-                  <span className="font-medium">caution</span> et réservation.
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/cgv"
-                    className="text-sm font-medium text-emerald-800 hover:text-emerald-900 underline"
-                  >
-                    CGV
-                  </Link>
-                  <Link
-                    href="/caution"
-                    className="text-sm font-medium text-emerald-800 hover:text-emerald-900 underline"
-                  >
-                    Caution
-                  </Link>
-                  <Link
-                    href="/reserver"
-                    className="text-sm font-medium text-emerald-800 hover:text-emerald-900 underline"
-                  >
-                    Réserver
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
 

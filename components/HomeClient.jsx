@@ -5,6 +5,7 @@ import Hero from "./Hero";
 import InspirationBlocks from "./InspirationBlocks";
 import GiftBanner from "./GiftBanner";
 import PhotoCarousel from "./PhotoCarousel";
+import CommercialBand from "./CommercialBand";
 
 export default function HomeClient() {
   // Génère automatiquement les listes d’images
@@ -25,6 +26,14 @@ export default function HomeClient() {
         {/* Hero avec bouton principal */}
         <div className="animate-fade-in-up">
           <Hero onReserveClick={() => location.assign("/reserver")} />
+        </div>
+
+        {/* ✅ Bandeau commercial (home) */}
+        <div
+          className="max-w-6xl mx-auto px-4 animate-fade-in-up"
+          style={{ animationDelay: "0.08s" }}
+        >
+          <CommercialBand />
         </div>
 
         {/* 3 cartes : Spa / Autour / Gourmets */}

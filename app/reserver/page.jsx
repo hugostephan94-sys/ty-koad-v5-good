@@ -1,11 +1,13 @@
-// app/reserver/page.jsx
 "use client";
 
+import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SiteHeader from "../../components/SiteHeader";
 import CalendarSelectable from "../../components/CalendarSelectable";
 import { CHALETS } from "../../lib/chalets";
+import { getAutoDiscount } from "../../lib/autoDiscount";
+import CommercialBand from "../../components/CommercialBand";
 
 function eur(n) {
   // n est en EUROS
@@ -76,15 +78,37 @@ function ReserverInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  // Texte de prix avec prise en compte du code cadeau
+  // ✅ Calcul complet : base -> remise auto -> code cadeau
+  const pricing = useMemo(() => {
+    const nights = Number(state?.nights || 0);
+    const baseEuros = Number(state?.total || 0);
+    const baseCents = Math.round(baseEuros * 100);
+
+    const auto = getAutoDiscount({
+      chaletId: tab, // "C1" ou "C2"
+      nights,
+      baseTotalCents: baseCents,
+    });
+
+    const afterAutoCents = Math.max(0, baseCents - (auto.amountCents || 0));
+    const finalCents = Math.max(0, afterAutoCents - discountCents);
+
+    return {
+      nights,
+      baseEuros,
+      baseCents,
+      auto, // {pct, amountCents, label}
+      afterAutoCents,
+      afterAutoEuros: afterAutoCents / 100,
+      finalCents,
+      finalEuros: finalCents / 100,
+    };
+  }, [state, tab, discountCents]);
+
   const priceText = useMemo(() => {
-    if (!state?.nights) return "";
-    const totalEuros = state.total || 0;
-    const totalCents = Math.round(totalEuros * 100);
-    const netCents = Math.max(0, totalCents - discountCents);
-    const netEuros = netCents / 100;
-    return eur(netEuros);
-  }, [state, discountCents]);
+    if (!pricing?.nights) return "";
+    return eur(pricing.finalEuros);
+  }, [pricing]);
 
   const peopleError =
     totalGuests < 1
@@ -139,13 +163,7 @@ function ReserverInner() {
   }
 
   function goPay() {
-    const { checkIn, checkOut, nights, total } = state;
-
-    // total en EUROS -> centimes pour réduction
-    const totalEuros = total || 0;
-    const totalCents = Math.round(totalEuros * 100);
-    const netCents = Math.max(0, totalCents - discountCents);
-    const netEuros = netCents / 100;
+    const { checkIn, checkOut, nights } = state;
 
     const q = new URLSearchParams({
       chalet: chalet.id,
@@ -153,15 +171,18 @@ function ReserverInner() {
       co: checkOut,
       nights: String(nights),
 
-      // montant en € pour la page /payer
-      amount: String(netEuros),
+      // ✅ montant FINAL en € pour /payer
+      amount: String(pricing.finalEuros),
 
       adults: String(adults),
       children: String(children),
 
-      // ✅ on passe les coordonnées à /payer
       firstname: firstname.trim(),
       email: email.trim(),
+
+      // (optionnel) infos remise auto (affichage/debug côté /payer)
+      autoDiscountPct: String(pricing.auto?.pct || 0),
+      autoDiscountCents: String(pricing.auto?.amountCents || 0),
 
       ...(gift
         ? {
@@ -187,6 +208,9 @@ function ReserverInner() {
           Choisissez votre chalet, vos dates, le nombre de personnes… puis
           validez votre réservation en quelques clics.
         </p>
+
+        {/* ✅ Bandeau commercial compact */}
+        <CommercialBand compact />
       </header>
 
       {/* Carte de réservation */}
@@ -315,11 +339,7 @@ function ReserverInner() {
             </div>
             <div className="rounded-2xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4">
               {["C1", "C2"].includes(tab) && (
-                <CalendarSelectable
-                  chaletId={tab}
-                  months={3}
-                  onChange={setState}
-                />
+                <CalendarSelectable chaletId={tab} months={3} onChange={setState} />
               )}
             </div>
           </div>
@@ -375,31 +395,89 @@ function ReserverInner() {
             </div>
           </div>
 
+          {/* ✅ Bon plan (super commercial) */}
+          {state?.nights > 0 && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs sm:text-sm text-stone-700">
+              <div className="font-medium text-emerald-900 mb-1">💡 Bon plan</div>
+              {pricing.auto?.amountCents > 0 ? (
+                <div>
+                  Remise automatique déjà appliquée : <b>{pricing.auto.label}</b>
+                </div>
+              ) : (
+                <div>
+                  Astuce : <b>−10%</b> dès <b>{tab === "C2" ? "2 nuits" : "5 nuits"}</b> en réservation directe.
+                </div>
+              )}
+
+              <div className="mt-2 flex flex-wrap gap-3">
+                <Link
+                  href="/cadeau"
+                  className="text-emerald-900 underline underline-offset-4"
+                >
+                  Offrir / utiliser un chèque cadeau 🎁
+                </Link>
+                <Link
+                  href="/infos-pratiques"
+                  className="text-emerald-900 underline underline-offset-4"
+                >
+                  Infos pratiques
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* Résumé / bouton payer */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 text-xs sm:text-sm text-stone-700">
               {state?.nights > 0 ? (
                 <>
-                  Séjour de <b>{state.nights}</b> nuit
-                  {state.nights > 1 ? "s" : ""} —{" "}
+                  Séjour de <b>{state.nights}</b> nuit{state.nights > 1 ? "s" : ""} —{" "}
+
+                  {(pricing.auto?.amountCents > 0 || gift) ? (
+                    <span className="line-through mr-1">{eur(pricing.baseEuros)}</span>
+                  ) : null}
+
+                  {pricing.auto?.amountCents > 0 && !gift ? (
+                    <>
+                      <b>{eur(pricing.afterAutoEuros)}</b>{" "}
+                      <span className="text-emerald-800">({pricing.auto.label})</span>
+                    </>
+                  ) : null}
+
                   {gift ? (
                     <>
-                      <span className="line-through mr-1">
-                        {eur(state.total)}
-                      </span>
                       <b>{priceText}</b>{" "}
-                      <span className="text-emerald-800">
-                        ({gift.message})
-                      </span>
+                      {pricing.auto?.amountCents > 0 && (
+                        <span className="text-emerald-800">({pricing.auto.label}) </span>
+                      )}
+                      <span className="text-emerald-800">({gift.message})</span>
                     </>
-                  ) : (
-                    <b>{eur(state.total)}</b>
+                  ) : null}
+
+                  {pricing.auto?.amountCents === 0 && !gift ? (
+                    <b>{eur(pricing.baseEuros)}</b>
+                  ) : null}
+
+                  {(pricing.auto?.amountCents > 0 || gift) && (
+                    <div className="mt-1 text-[11px] text-stone-500">
+                      {pricing.auto?.amountCents > 0 && (
+                        <div>
+                          {pricing.auto.label} : −{eur((pricing.auto.amountCents || 0) / 100)}
+                        </div>
+                      )}
+                      {gift && (
+                        <div>
+                          Code cadeau : −{eur(discountCents / 100)}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </>
               ) : (
                 "Sélectionnez vos dates pour voir le total."
               )}
             </div>
+
             <button
               type="button"
               onClick={goPay}
