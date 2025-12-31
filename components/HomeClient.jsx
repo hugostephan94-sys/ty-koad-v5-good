@@ -1,14 +1,32 @@
 "use client";
-
 import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import Hero from "./Hero";
 import InspirationBlocks from "./InspirationBlocks";
 import GiftBanner from "./GiftBanner";
 import PhotoCarousel from "./PhotoCarousel";
+
+// ✅ avis Google (ton composant déjà créé)
 import GoogleReviewsMini from "./GoogleReviewsMini";
 
 export default function HomeClient() {
+  // --- URL Google (celle que tu m’as donnée) ---
+  const GOOGLE_REVIEWS_URL = "https://maps.app.goo.gl/EsmwduwA4htLuE2N8";
+
+  // --- Avis (vrais extraits) ---
+  // ⚠️ Nadine Briec (et pas "Bric")
+  const googleReviews = [
+    {
+      author: "Nadine Briec",
+      text: "Nina et Hugo sont des hôtes très accueillants et très réactifs…",
+    },
+    {
+      author: "Esther",
+      text: "Super séjour aux chalets Ty Koad à Laz ! Nina et Hugo sont adorables, très…",
+    },
+  ];
+
+  // Génère automatiquement les listes d’images
   const photosDuo = Array.from({ length: 20 }, (_, i) => ({
     src: `/images/chalets/c2/${i + 1}.jpg`,
     alt: `Ty-Koad Duo — photo ${i + 1}`,
@@ -18,66 +36,43 @@ export default function HomeClient() {
     alt: `Ty-Koad (2 chambres) — photo ${i + 1}`,
   }));
 
-  const GOOGLE_REVIEWS_URL = "https://maps.app.goo.gl/EsmwduwA4htLuE2N8";
-
-  // ✅ extraits réels (raccourcis) + noms corrects
-  const googleReviews = [
-    {
-      author: "Esther",
-      text:
-        "Super séjour aux chalets Ty Koad à Laz ! Nina et Hugo sont adorables, très…",
-    },
-    {
-      author: "Nadine Briec",
-      text:
-        "Nina et Hugo sont des hôtes très accueillants et très réactifs…",
-    },
-    // Ajoute ici d’autres extraits réels si tu veux
-  ];
-
   return (
-    <div className="min-h-screen bg-[radial-gradient(1200px_500px_at_50%_0%,rgba(16,185,129,0.12),transparent_55%)]">
+    <div className="min-h-screen">
       <SiteHeader />
 
       <main className="pb-12 md:pb-16 space-y-8 md:space-y-12">
-        {/* HERO + décor */}
-        <div className="relative overflow-hidden">
-          <div className="pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-300/20 blur-3xl" />
-          <div className="pointer-events-none absolute -top-16 -left-16 h-[340px] w-[340px] rounded-full bg-teal-300/15 blur-3xl" />
-          <div className="pointer-events-none absolute -top-10 -right-24 h-[320px] w-[320px] rounded-full bg-emerald-500/10 blur-3xl" />
-
-          <div className="animate-fade-in-up">
-            <Hero onReserveClick={() => location.assign("/reserver")} />
-          </div>
-
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/40 to-transparent" />
+        {/* Hero avec bouton principal */}
+        <div className="animate-fade-in-up">
+          <Hero onReserveClick={() => location.assign("/reserver")} />
         </div>
 
-        {/* Inspiration */}
+        {/* 3 cartes : Spa / Autour / Gourmets */}
         <div className="animate-fade-in-up" style={{ animationDelay: "0.12s" }}>
           <InspirationBlocks />
         </div>
 
-        {/* 🔔 Bandeau chèque-cadeau */}
+        {/* 🎁 Bandeau chèque-cadeau */}
         <div
-          className="mt-2 sm:mt-4 mb-2 animate-fade-in-up"
+          className="mt-2 sm:mt-4 animate-fade-in-up"
           style={{ animationDelay: "0.22s" }}
         >
           <GiftBanner />
         </div>
 
-        {/* ✅ Avis Google (juste sous carte cadeau) */}
+        {/* ✅ Avis Google (centré sous GiftBanner) */}
         <section
           className="max-w-6xl mx-auto px-4 animate-fade-in-up"
           style={{ animationDelay: "0.26s" }}
         >
-          <div className="max-w-xl">
-            <GoogleReviewsMini
-              rating={5.0}
-              count={3}
-              reviews={googleReviews}
-              googleUrl={GOOGLE_REVIEWS_URL}
-            />
+          <div className="flex justify-center">
+            <div className="w-full max-w-xl">
+              <GoogleReviewsMini
+                rating={5.0}
+                count={3}
+                reviews={googleReviews}
+                googleUrl={GOOGLE_REVIEWS_URL}
+              />
+            </div>
           </div>
         </section>
 
@@ -87,14 +82,12 @@ export default function HomeClient() {
           style={{ animationDelay: "0.32s" }}
         >
           {/* Ty-Koad Duo */}
-          <article className="relative bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_300px_at_50%_0%,rgba(16,185,129,0.10),transparent_60%)]" />
-
+          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
             <PhotoCarousel
               images={photosDuo}
               heightClass="h-56 sm:h-64 md:h-80"
             />
-            <div className="relative p-5 sm:p-6">
+            <div className="p-5 sm:p-6">
               <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-emerald-100 text-emerald-900">
                 Spa privatif
               </div>
@@ -118,14 +111,12 @@ export default function HomeClient() {
           </article>
 
           {/* Ty-Koad 2 chambres */}
-          <article className="relative bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_300px_at_50%_0%,rgba(2,132,199,0.08),transparent_60%)]" />
-
+          <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
             <PhotoCarousel
               images={photosC1}
               heightClass="h-56 sm:h-64 md:h-80"
             />
-            <div className="relative p-5 sm:p-6">
+            <div className="p-5 sm:p-6">
               <h3 className="text-lg sm:text-xl font-semibold">
                 Ty-Koad — 2 chambres, 2 SDB
               </h3>
