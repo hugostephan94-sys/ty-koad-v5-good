@@ -5,7 +5,6 @@ import Hero from "./Hero";
 import InspirationBlocks from "./InspirationBlocks";
 import GiftBanner from "./GiftBanner";
 import PhotoCarousel from "./PhotoCarousel";
-import CommercialBand from "./CommercialBand";
 
 export default function HomeClient() {
   // Génère automatiquement les listes d’images
@@ -28,19 +27,8 @@ export default function HomeClient() {
           <Hero onReserveClick={() => location.assign("/reserver")} />
         </div>
 
-        {/* ✅ Bandeau commercial (home) */}
-        <div
-          className="max-w-6xl mx-auto px-4 animate-fade-in-up"
-          style={{ animationDelay: "0.08s" }}
-        >
-          <CommercialBand />
-        </div>
-
         {/* 3 cartes : Spa / Autour / Gourmets */}
-        <div
-          className="animate-fade-in-up"
-          style={{ animationDelay: "0.12s" }}
-        >
+        <div className="animate-fade-in-up" style={{ animationDelay: "0.12s" }}>
           <InspirationBlocks />
         </div>
 
@@ -59,10 +47,7 @@ export default function HomeClient() {
         >
           {/* Ty-Koad Duo */}
           <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
-            <PhotoCarousel
-              images={photosDuo}
-              heightClass="h-56 sm:h-64 md:h-80"
-            />
+            <PhotoCarousel images={photosDuo} heightClass="h-56 sm:h-64 md:h-80" />
             <div className="p-5 sm:p-6">
               <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-emerald-100 text-emerald-900">
                 Spa privatif
@@ -88,10 +73,7 @@ export default function HomeClient() {
 
           {/* Ty-Koad 2 chambres */}
           <article className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
-            <PhotoCarousel
-              images={photosC1}
-              heightClass="h-56 sm:h-64 md:h-80"
-            />
+            <PhotoCarousel images={photosC1} heightClass="h-56 sm:h-64 md:h-80" />
             <div className="p-5 sm:p-6">
               <h3 className="text-lg sm:text-xl font-semibold">
                 Ty-Koad — 2 chambres, 2 SDB
