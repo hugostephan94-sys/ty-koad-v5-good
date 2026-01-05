@@ -1,7 +1,7 @@
 // app/utils/server-db.js
 import prisma from "../../lib/db";
 
-// ⏳ Durée de blocage (pending) avant expiration
+// ⏳ Durée de blocage (PENDING) avant expiration
 const HOLD_MINUTES = 20;
 
 // petit helper pour sécuriser les dates
@@ -14,11 +14,20 @@ function toDateOrNull(value) {
   return d;
 }
 
+// normalise les statuts (enum Prisma attend MAJUSCULE)
+function normalizeStatus(status) {
+  if (!status) return undefined;
+  return String(status).trim().toUpperCase();
+}
+
 function computeExpiresAtForStatus(status) {
-  if (status === "pending") {
+  const st = normalizeStatus(status);
+
+  if (st === "PENDING") {
     return new Date(Date.now() + HOLD_MINUTES * 60 * 1000);
   }
-  // dès que c’est “terminé” (paid/failed/canceled/confirmed...) => plus d’expiration
+
+  // Dès que c’est “terminé” (PAID/FAILED/CANCELED/CONFIRMED/EXPIRED...) => plus d’expiration
   return null;
 }
 
@@ -33,9 +42,9 @@ export async function listReservations() {
 }
 
 /**
- * ✅ Liste “occupé calendrier” (ignore pending expirées)
- * - Occupé: paid/confirmed
- * - + pending uniquement si expiresAt > maintenant
+ * ✅ Liste “occupé calendrier” (ignore PENDING expirées)
+ * - Occupé: PAID/CONFIRMED
+ * - + PENDING uniquement si expiresAt > maintenant
  */
 export async function listReservationsForCalendar({ chalet } = {}) {
   const now = new Date();
@@ -43,8 +52,8 @@ export async function listReservationsForCalendar({ chalet } = {}) {
   const where = {
     ...(chalet ? { chalet: String(chalet).toUpperCase() } : {}),
     OR: [
-      { status: { in: ["paid", "confirmed"] } },
-      { status: "pending", expiresAt: { gt: now } },
+      { status: { in: ["PAID", "CONFIRMED"] } },
+      { status: "PENDING", expiresAt: { gt: now } },
     ],
   };
 
@@ -66,11 +75,13 @@ export async function saveReservation(resa) {
     email,
     adults = 1,
     children = 0,
-    status = "confirmed",
-  } = resa;
+    status = "CONFIRMED",
+  } = resa || {};
 
   const ciDate = toDateOrNull(ci);
   const coDate = toDateOrNull(co);
+
+  const st = normalizeStatus(status) || "CONFIRMED";
 
   // 🔴 dates invalides → on log et on sort sans planter
   if (!ciDate || !coDate) {
@@ -78,7 +89,7 @@ export async function saveReservation(resa) {
       chalet,
       ci,
       co,
-      status,
+      status: st,
     });
     return null;
   }
@@ -90,10 +101,10 @@ export async function saveReservation(resa) {
       co: coDate,
       firstname: firstname || null,
       email: email || null,
-      adults,
-      children,
-      status: status || "confirmed",
-      expiresAt: status === "pending" ? computeExpiresAtForStatus("pending") : null,
+      adults: Number.isFinite(Number(adults)) ? Number(adults) : 1,
+      children: Number.isFinite(Number(children)) ? Number(children) : 0,
+      status: st,
+      expiresAt: st === "PENDING" ? computeExpiresAtForStatus("PENDING") : null,
     },
   });
 
@@ -103,11 +114,11 @@ export async function saveReservation(resa) {
 /**
  * ✅ Upsert réservation via PaymentIntentId (Stripe)
  * Utilisé par :
- * - webhook Stripe (status paid/failed/canceled)
+ * - webhook Stripe (status PAID/FAILED/CANCELED)
  * - /api/send-confirmation (pour sauver email/prénom en DB)
  *
  * ⭐ IMPORTANT :
- * - Si status === "pending" => on met/rafraîchit expiresAt (hold)
+ * - Si status === "PENDING" => on met/rafraîchit expiresAt (hold)
  * - Sinon => expiresAt = null
  */
 export async function upsertReservationByPI(payload) {
@@ -131,30 +142,32 @@ export async function upsertReservationByPI(payload) {
   const ciDate = toDateOrNull(ci);
   const coDate = toDateOrNull(co);
 
-  // expiresAt : seulement si on reçoit un status
-  // - pending => now + HOLD
-  // - autre   => null
-  const expiresAt =
-    status !== undefined ? computeExpiresAtForStatus(status) : undefined;
+  const st = status !== undefined ? normalizeStatus(status) : undefined;
 
-  // On construit un patch propre (on n'écrase pas avec undefined)
+  // expiresAt : seulement si on reçoit un status
+  // - PENDING => now + HOLD
+  // - autre   => null
+  const expiresAt = st !== undefined ? computeExpiresAtForStatus(st) : undefined;
+
+  // Patch propre (on n'écrase pas avec undefined)
   const data = {
-    status: status || undefined,
+    status: st || undefined,
     chalet: chalet ? String(chalet).toUpperCase() : undefined,
     firstname: firstname !== undefined ? (firstname || null) : undefined,
     email: email !== undefined ? (email || null) : undefined,
-    adults: typeof adults === "number" ? adults : undefined,
-    children: typeof children === "number" ? children : undefined,
+    adults: adults !== undefined ? (Number.isFinite(Number(adults)) ? Number(adults) : 1) : undefined,
+    children:
+      children !== undefined
+        ? (Number.isFinite(Number(children)) ? Number(children) : 0)
+        : undefined,
     ci: ciDate || undefined,
     co: coDate || undefined,
-    expiresAt, // ✅
+    expiresAt,
   };
 
-  // Prisma n'aime pas les undefined si on les passe explicitement
   Object.keys(data).forEach((k) => data[k] === undefined && delete data[k]);
 
   try {
-    // Si existe : update
     const existing = await prisma.reservation.findUnique({
       where: { paymentIntentId },
     });
@@ -167,7 +180,7 @@ export async function upsertReservationByPI(payload) {
       return { ok: true, action: "updated", reservation: updated };
     }
 
-    // Sinon : create (on a besoin au minimum de chalet/ci/co)
+    // create : besoin de chalet/ci/co
     const chaletNorm = chalet ? String(chalet).toUpperCase() : "";
 
     if (!chaletNorm || !ciDate || !coDate) {
@@ -184,15 +197,15 @@ export async function upsertReservationByPI(payload) {
     const created = await prisma.reservation.create({
       data: {
         paymentIntentId,
-        status: status || "confirmed",
+        status: st || "CONFIRMED",
         chalet: chaletNorm,
         ci: ciDate,
         co: coDate,
         firstname: firstname || null,
         email: email || null,
-        adults: typeof adults === "number" ? adults : 1,
-        children: typeof children === "number" ? children : 0,
-        expiresAt: status ? computeExpiresAtForStatus(status) : null, // ✅
+        adults: Number.isFinite(Number(adults)) ? Number(adults) : 1,
+        children: Number.isFinite(Number(children)) ? Number(children) : 0,
+        expiresAt: st ? computeExpiresAtForStatus(st) : null,
       },
     });
 

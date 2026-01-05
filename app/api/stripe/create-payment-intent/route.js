@@ -46,7 +46,7 @@ function freeKey({ chalet, ci, co, email, giftCode }) {
   return `FREE_${h.slice(0, 24)}`; // court + unique
 }
 
-// ✅ check overlap + statuts actifs
+// ✅ check overlap + statuts actifs (ENUM => valeurs en MAJUSCULE)
 async function hasConflict({ chalet, ciDate, coDate }) {
   const now = new Date();
 
@@ -56,8 +56,8 @@ async function hasConflict({ chalet, ciDate, coDate }) {
       ci: { lt: coDate },
       co: { gt: ciDate },
       OR: [
-        { status: { in: ["paid", "confirmed"] } },
-        { status: "pending", expiresAt: { gt: now } },
+        { status: { in: ["PAID", "CONFIRMED"] } },
+        { status: "PENDING", expiresAt: { gt: now } },
       ],
     },
     select: { id: true, status: true, expiresAt: true, ci: true, co: true },
@@ -79,7 +79,7 @@ export async function POST(req) {
       giftCode,
     } = await req.json();
 
-    const ch = (chalet || "").toUpperCase();
+    const ch = (chalet || "").trim().toUpperCase();
     if (!ch || !ci || !co) {
       return new Response(
         JSON.stringify({ error: "Paramètres de réservation manquants." }),
@@ -100,7 +100,7 @@ export async function POST(req) {
       });
     }
 
-    // ✅ Refus immédiat si dates déjà prises (paid/confirmed ou pending non expiré)
+    // ✅ Refus immédiat si dates déjà prises
     if (await hasConflict({ chalet: ch, ciDate, coDate })) {
       return new Response(JSON.stringify({ error: "Dates indisponibles." }), {
         status: 409,
@@ -131,23 +131,27 @@ export async function POST(req) {
       nights: n,
       baseTotalCents,
     });
-    const afterAutoCents = Math.max(0, baseTotalCents - (auto.amountCents || 0));
+    const afterAutoCents = Math.max(
+      0,
+      baseTotalCents - (auto.amountCents || 0)
+    );
 
     // ✅ cadeau serveur (revalidation DB)
     let giftCents = 0;
     let normalizedGiftCode = "";
 
-    let giftRecord = null;
     if (giftCode && String(giftCode).trim()) {
       normalizedGiftCode = String(giftCode).trim().toUpperCase();
-      giftRecord = await prisma.gift.findUnique({
+
+      const giftRecord = await prisma.gift.findUnique({
         where: { code: normalizedGiftCode },
       });
 
       if (!giftRecord) {
-        return new Response(JSON.stringify({ error: "Code cadeau introuvable." }), {
-          status: 404,
-        });
+        return new Response(
+          JSON.stringify({ error: "Code cadeau introuvable." }),
+          { status: 404 }
+        );
       }
       if (giftRecord.usedAt) {
         return new Response(
@@ -193,7 +197,9 @@ export async function POST(req) {
         if (Number.isFinite(need) && n < need) {
           return new Response(
             JSON.stringify({
-              error: `Ce bon requiert au moins ${need} nuit${need > 1 ? "s" : ""}.`,
+              error: `Ce bon requiert au moins ${need} nuit${
+                need > 1 ? "s" : ""
+              }.`,
             }),
             { status: 400 }
           );
@@ -254,7 +260,7 @@ export async function POST(req) {
           await tx.reservation.create({
             data: {
               paymentIntentId: piFree,
-              status: "paid",
+              status: "PAID",
               chalet: ch,
               ci: new Date(ci),
               co: new Date(co),
@@ -310,10 +316,10 @@ export async function POST(req) {
       },
     });
 
-    // ✅ réservation pending liée au PI (expiresAt géré dans upsert)
+    // ✅ réservation PENDING liée au PI (expiresAt géré dans upsert)
     await upsertReservationByPI({
       paymentIntentId: intent.id,
-      status: "pending",
+      status: "PENDING",
       chalet: ch,
       ci,
       co,

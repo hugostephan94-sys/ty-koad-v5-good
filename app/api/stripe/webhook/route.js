@@ -42,7 +42,7 @@ export async function POST(req) {
           await prisma.depositHold.update({
             where: { reservationId },
             data: {
-              status: "requires_capture",
+              status: "REQUIRES_CAPTURE",
               authorizedAt: new Date(),
               paymentIntentId: pi.id,
             },
@@ -53,7 +53,7 @@ export async function POST(req) {
           await prisma.depositHold.update({
             where: { reservationId },
             data: {
-              status: "captured",
+              status: "CAPTURED",
               capturedAt: new Date(),
               paymentIntentId: pi.id,
             },
@@ -64,7 +64,7 @@ export async function POST(req) {
           await prisma.depositHold.update({
             where: { reservationId },
             data: {
-              status: "canceled",
+              status: "CANCELED",
               canceledAt: new Date(),
               paymentIntentId: pi.id,
             },
@@ -75,7 +75,7 @@ export async function POST(req) {
           await prisma.depositHold.update({
             where: { reservationId },
             data: {
-              status: "failed",
+              status: "FAILED",
               paymentIntentId: pi.id,
             },
           });
@@ -95,7 +95,7 @@ export async function POST(req) {
         // 1) Marquer la réservation payée
         await upsertReservationByPI({
           paymentIntentId: pi.id,
-          status: "paid",
+          status: "PAID",
         });
 
         // 2) ✅ Consommer le gift côté serveur (idempotent)
@@ -111,12 +111,12 @@ export async function POST(req) {
       } else if (event.type === "payment_intent.payment_failed") {
         await upsertReservationByPI({
           paymentIntentId: pi.id,
-          status: "failed",
+          status: "FAILED",
         });
       } else if (event.type === "payment_intent.canceled") {
         await upsertReservationByPI({
           paymentIntentId: pi.id,
-          status: "canceled",
+          status: "CANCELED",
         });
       }
 
