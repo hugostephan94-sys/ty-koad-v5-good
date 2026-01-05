@@ -1,3 +1,4 @@
+// app/api/cron/deposit-reminders/route.js
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "../../../../lib/db";
@@ -10,14 +11,14 @@ function assertCron(req) {
   return !!process.env.CRON_SECRET && auth === expected;
 }
 
-// YYYY-MM-DD en timezone Europe/Paris (fiable pour “arrive demain”)
+// YYYY-MM-DD en timezone Europe/Paris
 function ymdParis(d) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Paris",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(d); // => 2026-01-04
+  }).format(d);
 }
 
 export async function GET(req) {
@@ -26,16 +27,23 @@ export async function GET(req) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const now = new Date();
+  const todayKey = ymdParis(now);
   const tomorrowKey = ymdParis(new Date(now.getTime() + 24 * 60 * 60 * 1000));
 
-  // On récupère large (3 jours) puis on filtre “demain” côté code (évite les problèmes d’heure/UTC)
+  // On récupère large puis on filtre “aujourd’hui/demain” côté code.
+  // Lookback pour éviter les soucis si CI est stocké à 00:00.
+  const minLookback = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const maxLookahead = new Date(now.getTime() + 72 * 60 * 60 * 1000);
 
   const reservations = await prisma.reservation.findMany({
     where: {
-      ci: { gte: now, lt: maxLookahead },
+      ci: { gte: minLookback, lt: maxLookahead },
       email: { not: null },
-      status: { in: ["paid", "confirmed"] },
+      // ✅ on accepte MAJUSCULES + minuscules (au cas où tu as déjà des anciennes lignes)
+      OR: [
+        { status: { in: ["PAID", "CONFIRMED"] } },
+        { status: { in: ["paid", "confirmed"] } },
+      ],
     },
     include: { depositHold: true },
     orderBy: { ci: "asc" },
@@ -43,15 +51,23 @@ export async function GET(req) {
 
   let sent = 0;
   let scanned = 0;
+  let matched = 0;
+  let skippedAlreadySent = 0;
 
   for (const r of reservations) {
     scanned++;
 
-    // ✅ Seulement celles dont l'arrivée est DEMAIN (date Paris)
-    if (ymdParis(r.ci) !== tomorrowKey) continue;
+    const ciKey = ymdParis(r.ci);
+
+    // ✅ On envoie pour les arrivées AUJOURD’HUI ou DEMAIN (heure Paris)
+    if (ciKey !== todayKey && ciKey !== tomorrowKey) continue;
+    matched++;
 
     // ✅ déjà envoyé
-    if (r.depositHold?.emailSentAt) continue;
+    if (r.depositHold?.emailSentAt) {
+      skippedAlreadySent++;
+      continue;
+    }
 
     const depositEuros =
       CHALETS?.[r.chalet]?.deposit ?? (r.chalet === "C2" ? 300 : 150);
@@ -59,7 +75,7 @@ export async function GET(req) {
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    // expire 48h après l'heure "ci" stockée (ok)
+    // Expire 48h après l'heure "ci" stockée (ok)
     const tokenExpiresAt = new Date(r.ci.getTime() + 48 * 60 * 60 * 1000);
 
     if (r.depositHold) {
@@ -110,8 +126,11 @@ export async function GET(req) {
 
   return NextResponse.json({
     ok: true,
+    todayKey,
     tomorrowKey,
     scanned,
+    matched,
+    skippedAlreadySent,
     sent,
   });
 }
