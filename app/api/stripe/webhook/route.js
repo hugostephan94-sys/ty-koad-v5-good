@@ -87,15 +87,9 @@ export async function POST(req) {
 
     // ============================================================
     // ✅ CAS 2 : PAIEMENT RÉSERVATION
-    // On consomme le chèque cadeau ici (serveur = source de vérité)
-    // Détection: PaymentIntent (metadata.purpose === "booking_payment" si présent)
     // ============================================================
     if (obj?.object === "payment_intent") {
       const pi = obj;
-
-      // (Optionnel) tu peux filtrer strictement sur purpose:
-      // const isBooking = pi?.metadata?.purpose === "booking_payment";
-      // Si tu veux le filtrage strict, décommente et entoure la suite avec if (isBooking) {...}
 
       if (event.type === "payment_intent.succeeded") {
         // 1) Marquer la réservation payée
@@ -108,7 +102,6 @@ export async function POST(req) {
         const giftCode = (pi.metadata?.giftCode || "").trim().toUpperCase();
         const giftCents = Number(pi.metadata?.giftCents || 0);
 
-        // On ne consomme que si un code existe ET qu'il a réellement servi
         if (giftCode && giftCents > 0) {
           await prisma.gift.updateMany({
             where: { code: giftCode, usedAt: null },
@@ -119,6 +112,11 @@ export async function POST(req) {
         await upsertReservationByPI({
           paymentIntentId: pi.id,
           status: "failed",
+        });
+      } else if (event.type === "payment_intent.canceled") {
+        await upsertReservationByPI({
+          paymentIntentId: pi.id,
+          status: "canceled",
         });
       }
 

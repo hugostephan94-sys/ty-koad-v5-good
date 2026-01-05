@@ -46,6 +46,26 @@ function freeKey({ chalet, ci, co, email, giftCode }) {
   return `FREE_${h.slice(0, 24)}`; // court + unique
 }
 
+// ✅ check overlap + statuts actifs
+async function hasConflict({ chalet, ciDate, coDate }) {
+  const now = new Date();
+
+  const conflict = await prisma.reservation.findFirst({
+    where: {
+      chalet,
+      ci: { lt: coDate },
+      co: { gt: ciDate },
+      OR: [
+        { status: { in: ["paid", "confirmed"] } },
+        { status: "pending", expiresAt: { gt: now } },
+      ],
+    },
+    select: { id: true, status: true, expiresAt: true, ci: true, co: true },
+  });
+
+  return !!conflict;
+}
+
 export async function POST(req) {
   try {
     const {
@@ -69,6 +89,21 @@ export async function POST(req) {
     if (!CHALETS[ch]) {
       return new Response(JSON.stringify({ error: "Chalet invalide." }), {
         status: 400,
+      });
+    }
+
+    const ciDate = new Date(ci);
+    const coDate = new Date(co);
+    if (isNaN(ciDate.getTime()) || isNaN(coDate.getTime())) {
+      return new Response(JSON.stringify({ error: "Dates invalides." }), {
+        status: 400,
+      });
+    }
+
+    // ✅ Refus immédiat si dates déjà prises (paid/confirmed ou pending non expiré)
+    if (await hasConflict({ chalet: ch, ciDate, coDate })) {
+      return new Response(JSON.stringify({ error: "Dates indisponibles." }), {
+        status: 409,
       });
     }
 
@@ -180,6 +215,13 @@ export async function POST(req) {
 
     // ✅ CAS GRATUIT : 0€ -> pas de Stripe, mais réservation + consume gift
     if (finalAmountCents === 0) {
+      // re-check conflit (au cas où entre temps)
+      if (await hasConflict({ chalet: ch, ciDate, coDate })) {
+        return new Response(JSON.stringify({ error: "Dates indisponibles." }), {
+          status: 409,
+        });
+      }
+
       const piFree = freeKey({
         chalet: ch,
         ci,
@@ -220,6 +262,7 @@ export async function POST(req) {
               email: (email || "").trim() || null,
               adults: Number.isFinite(Number(adults)) ? Number(adults) : 1,
               children: Number.isFinite(Number(children)) ? Number(children) : 0,
+              expiresAt: null,
             },
           });
         });
@@ -267,7 +310,7 @@ export async function POST(req) {
       },
     });
 
-    // réservation pending liée au PI
+    // ✅ réservation pending liée au PI (expiresAt géré dans upsert)
     await upsertReservationByPI({
       paymentIntentId: intent.id,
       status: "pending",

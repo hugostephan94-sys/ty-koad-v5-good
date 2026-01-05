@@ -7,6 +7,28 @@ generator client {
   provider = "prisma-client-js"
 }
 
+/**
+ * Statuts propres
+ * - ReservationStatus : état de la réservation
+ * - DepositStatus : état de l’empreinte de caution
+ */
+enum ReservationStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  FAILED
+  CANCELED
+  EXPIRED
+}
+
+enum DepositStatus {
+  PENDING
+  REQUIRES_CAPTURE
+  CAPTURED
+  CANCELED
+  FAILED
+}
+
 model Gift {
   id           Int      @id @default(autoincrement())
   code         String   @unique
@@ -25,38 +47,51 @@ model Gift {
 }
 
 model Reservation {
-  id              Int      @id @default(autoincrement())
-  chalet          String   // "C1" ou "C2"
-  ci              DateTime // check-in
-  co              DateTime // check-out
-  firstname       String?  // prénom / nom
-  email           String?  // email du client
-  adults          Int      @default(1)
-  children        Int      @default(0)
-  status          String   @default("confirmed")
-  paymentIntentId String?  @unique   // Stripe paiement réservation
-  createdAt       DateTime @default(now())
+  id              Int               @id @default(autoincrement())
+  chalet          String            // "C1" ou "C2"
+  ci              DateTime          // check-in
+  co              DateTime          // check-out
+  firstname       String?           // prénom / nom
+  email           String?           // email du client
+  adults          Int               @default(1)
+  children        Int               @default(0)
+
+  // ✅ Statut typé + expiration pour éviter les "réservations fantômes"
+  status          ReservationStatus @default(CONFIRMED)
+  paymentIntentId String?           @unique // Stripe paiement réservation
+
+  // ✅ Si status = PENDING : expiresAt = now + X minutes
+  //    Sinon : expiresAt = null
+  expiresAt       DateTime?
+
+  createdAt       DateTime          @default(now())
+
+  // ✅ IMPORTANT pour migrer sans erreur avec des lignes existantes :
+  // on met un default(now()) + @updatedAt
+  updatedAt       DateTime          @default(now()) @updatedAt
 
   // ✅ Lien vers la caution (empreinte bancaire)
   depositHold     DepositHold?
 }
 
 model DepositHold {
-  id              Int         @id @default(autoincrement())
-  reservationId   Int         @unique
-  reservation     Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  id              Int          @id @default(autoincrement())
+  reservationId   Int          @unique
+  reservation     Reservation  @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 
   amountCents     Int
-  tokenHash       String      @unique
+  tokenHash       String       @unique
   tokenExpiresAt  DateTime
   emailSentAt     DateTime?
 
-  paymentIntentId String?     @unique
-  status          String      @default("pending") // pending|requires_capture|captured|canceled|failed
+  paymentIntentId String?      @unique
+
+  // ✅ Statut typé caution
+  status          DepositStatus @default(PENDING)
   authorizedAt    DateTime?
   capturedAt      DateTime?
   canceledAt      DateTime?
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }

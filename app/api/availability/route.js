@@ -10,12 +10,26 @@ function isoDay(d) {
   return x.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
+function isActiveReservation(r, now) {
+  const st = String(r.status || "").toUpperCase();
+
+  // Actifs sûrs
+  if (st === "PAID" || st === "CONFIRMED") return true;
+
+  // Pending uniquement si pas expiré
+  if (st === "PENDING") {
+    const exp = r.expiresAt ? new Date(r.expiresAt) : null;
+    return exp && exp.getTime() > now.getTime();
+  }
+
+  return false;
+}
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
 
-  // On nettoie bien le paramètre chalet
-  let rawChalet = searchParams.get("chalet") || "C1";
-  rawChalet = rawChalet.trim().toUpperCase(); // <- important
+  // Param chalet
+  let rawChalet = (searchParams.get("chalet") || "C1").trim().toUpperCase();
 
   // Alias possibles
   let chalet = rawChalet;
@@ -27,35 +41,43 @@ export async function GET(req) {
   console.log("[availability] chalet =", chalet, "(raw =", rawChalet + ")");
 
   // 1) Flux externes (Airbnb/Booking/Abritel)
-  const ext = await fetchExternalIcal(chalet); 
+  const ext = await fetchExternalIcal(chalet);
   // => { bookedDates: [...], ranges: [...], updatedAt }
 
-  // 2) Réservations faites sur TON site (DB via loadSiteReservations)
+  // 2) Réservations faites sur TON site (DB)
   let siteRes = [];
   try {
-    siteRes = await loadSiteReservations(chalet); // [{ checkIn, checkOut, status, ... }]
+    siteRes = await loadSiteReservations(chalet);
+    // attendu: [{ checkIn, checkOut, status, expiresAt, ... }]
   } catch (e) {
     console.error("[availability] erreur loadSiteReservations", e);
     siteRes = [];
   }
 
+  const now = new Date();
+
   console.log(
-    "[availability] siteRes count =",
+    "[availability] siteRes =",
     siteRes.length,
-    "ext bookedDates count =",
+    "| ext bookedDates =",
     (ext.bookedDates || []).length
   );
 
-  // 3) On explose les nuits des résas site
+  // 3) Exploser les nuits des réservations site (avec filtre sécurité)
   const siteDays = new Set();
 
   for (const r of siteRes) {
-    // loadSiteReservations retire déjà les "cancelled"
+    if (!isActiveReservation(r, now)) continue;
+
     const d1 = new Date(r.checkIn);
-    d1.setHours(12, 0, 0, 0);
     const d2 = new Date(r.checkOut);
+
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) continue;
+
+    d1.setHours(12, 0, 0, 0);
     d2.setHours(12, 0, 0, 0);
 
+    // nuits: d1 inclus, d2 exclu
     for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
       siteDays.add(isoDay(d));
     }
@@ -65,7 +87,7 @@ export async function GET(req) {
   const merged = new Set(ext.bookedDates || []);
   for (const d of siteDays) merged.add(d);
 
-  // 5) Fenêtrage (from/to) pour limiter la réponse
+  // 5) Fenêtrage (from/to)
   const start = from ? new Date(from) : new Date();
   const end = to
     ? new Date(to)
@@ -82,15 +104,12 @@ export async function GET(req) {
     })
     .sort();
 
-  console.log(
-    "[availability] final bookedDates count =",
-    bookedDates.length
-  );
+  console.log("[availability] final bookedDates =", bookedDates.length);
 
   return NextResponse.json({
     chalet,
     bookedDates,
-    ranges: ext.ranges,      // [{start:"YYYY-MM-DD", end:"YYYY-MM-DD"}]
+    ranges: ext.ranges, // [{start:"YYYY-MM-DD", end:"YYYY-MM-DD"}]
     updatedAt: ext.updatedAt,
     nextRefreshInMin: 15,
   });

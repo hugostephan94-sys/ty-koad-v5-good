@@ -1,6 +1,9 @@
 // app/utils/server-db.js
 import prisma from "../../lib/db";
 
+// ⏳ Durée de blocage (pending) avant expiration
+const HOLD_MINUTES = 20;
+
 // petit helper pour sécuriser les dates
 function toDateOrNull(value) {
   if (!value) return null;
@@ -11,6 +14,14 @@ function toDateOrNull(value) {
   return d;
 }
 
+function computeExpiresAtForStatus(status) {
+  if (status === "pending") {
+    return new Date(Date.now() + HOLD_MINUTES * 60 * 1000);
+  }
+  // dès que c’est “terminé” (paid/failed/canceled/confirmed...) => plus d’expiration
+  return null;
+}
+
 /**
  * Liste toutes les réservations (DB Prisma)
  */
@@ -19,6 +30,28 @@ export async function listReservations() {
     orderBy: { ci: "desc" },
   });
   return all;
+}
+
+/**
+ * ✅ Liste “occupé calendrier” (ignore pending expirées)
+ * - Occupé: paid/confirmed
+ * - + pending uniquement si expiresAt > maintenant
+ */
+export async function listReservationsForCalendar({ chalet } = {}) {
+  const now = new Date();
+
+  const where = {
+    ...(chalet ? { chalet: String(chalet).toUpperCase() } : {}),
+    OR: [
+      { status: { in: ["paid", "confirmed"] } },
+      { status: "pending", expiresAt: { gt: now } },
+    ],
+  };
+
+  return prisma.reservation.findMany({
+    where,
+    orderBy: { ci: "asc" },
+  });
 }
 
 /**
@@ -52,7 +85,7 @@ export async function saveReservation(resa) {
 
   const created = await prisma.reservation.create({
     data: {
-      chalet,
+      chalet: String(chalet || "").toUpperCase(),
       ci: ciDate,
       co: coDate,
       firstname: firstname || null,
@@ -60,6 +93,7 @@ export async function saveReservation(resa) {
       adults,
       children,
       status: status || "confirmed",
+      expiresAt: status === "pending" ? computeExpiresAtForStatus("pending") : null,
     },
   });
 
@@ -69,8 +103,12 @@ export async function saveReservation(resa) {
 /**
  * ✅ Upsert réservation via PaymentIntentId (Stripe)
  * Utilisé par :
- * - webhook Stripe (status paid/failed)
+ * - webhook Stripe (status paid/failed/canceled)
  * - /api/send-confirmation (pour sauver email/prénom en DB)
+ *
+ * ⭐ IMPORTANT :
+ * - Si status === "pending" => on met/rafraîchit expiresAt (hold)
+ * - Sinon => expiresAt = null
  */
 export async function upsertReservationByPI(payload) {
   const {
@@ -93,16 +131,23 @@ export async function upsertReservationByPI(payload) {
   const ciDate = toDateOrNull(ci);
   const coDate = toDateOrNull(co);
 
+  // expiresAt : seulement si on reçoit un status
+  // - pending => now + HOLD
+  // - autre   => null
+  const expiresAt =
+    status !== undefined ? computeExpiresAtForStatus(status) : undefined;
+
   // On construit un patch propre (on n'écrase pas avec undefined)
   const data = {
     status: status || undefined,
-    chalet: chalet || undefined,
+    chalet: chalet ? String(chalet).toUpperCase() : undefined,
     firstname: firstname !== undefined ? (firstname || null) : undefined,
     email: email !== undefined ? (email || null) : undefined,
     adults: typeof adults === "number" ? adults : undefined,
     children: typeof children === "number" ? children : undefined,
     ci: ciDate || undefined,
     co: coDate || undefined,
+    expiresAt, // ✅
   };
 
   // Prisma n'aime pas les undefined si on les passe explicitement
@@ -123,13 +168,13 @@ export async function upsertReservationByPI(payload) {
     }
 
     // Sinon : create (on a besoin au minimum de chalet/ci/co)
-    if (!chalet || !ciDate || !coDate) {
-      console.warn("[upsertReservationByPI] create impossible (chalet/ci/co manquants)", {
-        paymentIntentId,
-        chalet,
-        ci,
-        co,
-      });
+    const chaletNorm = chalet ? String(chalet).toUpperCase() : "";
+
+    if (!chaletNorm || !ciDate || !coDate) {
+      console.warn(
+        "[upsertReservationByPI] create impossible (chalet/ci/co manquants)",
+        { paymentIntentId, chalet, ci, co }
+      );
       return {
         ok: false,
         error: "create impossible (chalet/ci/co manquants)",
@@ -140,13 +185,14 @@ export async function upsertReservationByPI(payload) {
       data: {
         paymentIntentId,
         status: status || "confirmed",
-        chalet,
+        chalet: chaletNorm,
         ci: ciDate,
         co: coDate,
         firstname: firstname || null,
         email: email || null,
         adults: typeof adults === "number" ? adults : 1,
         children: typeof children === "number" ? children : 0,
+        expiresAt: status ? computeExpiresAtForStatus(status) : null, // ✅
       },
     });
 
