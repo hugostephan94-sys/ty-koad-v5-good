@@ -26,10 +26,6 @@ export async function POST(req) {
 
     // ============================================================
     // ✅ CAS 1 : CAUTION (empreinte bancaire)
-    // Détection robuste via metadata:
-    // - purpose === "security_deposit" (ton ancien)
-    // - type === "deposit_hold" (mon recommandé)
-    // - depositHoldId présent
     // ============================================================
     const isDepositPI =
       obj?.object === "payment_intent" &&
@@ -40,36 +36,42 @@ export async function POST(req) {
     if (isDepositPI) {
       const pi = obj;
 
-      const reservationId = pi.metadata?.reservationId
-        ? Number(pi.metadata.reservationId)
-        : null;
+      const reservationIdRaw = pi.metadata?.reservationId;
+      const depositHoldIdRaw = pi.metadata?.depositHoldId;
 
-      const depositHoldId = pi.metadata?.depositHoldId
-        ? Number(pi.metadata.depositHoldId)
-        : null;
+      const reservationId = reservationIdRaw ? Number(reservationIdRaw) : null;
+      const depositHoldId = depositHoldIdRaw ? Number(depositHoldIdRaw) : null;
 
-      // Petite helper pour update sans casser si pas trouvé
+      const safeReservationId =
+        Number.isFinite(reservationId) && reservationId > 0 ? reservationId : null;
+
+      const safeDepositHoldId =
+        Number.isFinite(depositHoldId) && depositHoldId > 0 ? depositHoldId : null;
+
       async function updateDepositHold(data) {
-        if (depositHoldId) {
+        // ✅ on force paymentIntentId partout
+        const payload = { ...data, paymentIntentId: pi.id };
+
+        if (safeDepositHoldId) {
           await prisma.depositHold.updateMany({
-            where: { id: depositHoldId },
-            data: { ...data, paymentIntentId: pi.id },
+            where: { id: safeDepositHoldId },
+            data: payload,
           });
           return;
         }
 
-        if (reservationId) {
+        if (safeReservationId) {
           await prisma.depositHold.updateMany({
-            where: { reservationId },
-            data: { ...data, paymentIntentId: pi.id },
+            where: { reservationId: safeReservationId },
+            data: payload,
           });
           return;
         }
 
-        // fallback: si jamais tu veux rattacher via paymentIntentId
+        // fallback
         await prisma.depositHold.updateMany({
           where: { paymentIntentId: pi.id },
-          data,
+          data: payload,
         });
       }
 
@@ -78,11 +80,8 @@ export async function POST(req) {
           status: "REQUIRES_CAPTURE",
           authorizedAt: new Date(),
         });
-      }
-
-      // ⚠️ Avec capture_method="manual", "succeeded" arrive au moment de la CAPTURE,
-      // pas à l'autorisation. Donc ça servira si tu captures plus tard.
-      else if (event.type === "payment_intent.succeeded") {
+      } else if (event.type === "payment_intent.succeeded") {
+        // arrive au moment de la CAPTURE (manual capture)
         await updateDepositHold({
           status: "CAPTURED",
           capturedAt: new Date(),
@@ -108,13 +107,11 @@ export async function POST(req) {
       const pi = obj;
 
       if (event.type === "payment_intent.succeeded") {
-        // 1) Marquer la réservation payée
         await upsertReservationByPI({
           paymentIntentId: pi.id,
-          status: "PAID", // ✅ correspond à ton enum ReservationStatus
+          status: "PAID",
         });
 
-        // 2) ✅ Consommer le gift côté serveur (idempotent)
         const giftCode = (pi.metadata?.giftCode || "").trim().toUpperCase();
         const giftCents = Number(pi.metadata?.giftCents || 0);
 
