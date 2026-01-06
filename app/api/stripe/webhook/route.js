@@ -25,61 +25,77 @@ export async function POST(req) {
     const obj = event.data?.object;
 
     // ============================================================
-    // ✅ CAS 1 : CAUTION (empreinte bancaire) — ne touche PAS Reservation
-    // Détection: PaymentIntent + metadata.purpose === "security_deposit"
+    // ✅ CAS 1 : CAUTION (empreinte bancaire)
+    // Détection robuste via metadata:
+    // - purpose === "security_deposit" (ton ancien)
+    // - type === "deposit_hold" (mon recommandé)
+    // - depositHoldId présent
     // ============================================================
-    if (
+    const isDepositPI =
       obj?.object === "payment_intent" &&
-      obj?.metadata?.purpose === "security_deposit"
-    ) {
+      (obj?.metadata?.purpose === "security_deposit" ||
+        obj?.metadata?.type === "deposit_hold" ||
+        !!obj?.metadata?.depositHoldId);
+
+    if (isDepositPI) {
       const pi = obj;
+
       const reservationId = pi.metadata?.reservationId
         ? Number(pi.metadata.reservationId)
         : null;
 
+      const depositHoldId = pi.metadata?.depositHoldId
+        ? Number(pi.metadata.depositHoldId)
+        : null;
+
+      // Petite helper pour update sans casser si pas trouvé
+      async function updateDepositHold(data) {
+        if (depositHoldId) {
+          await prisma.depositHold.updateMany({
+            where: { id: depositHoldId },
+            data: { ...data, paymentIntentId: pi.id },
+          });
+          return;
+        }
+
+        if (reservationId) {
+          await prisma.depositHold.updateMany({
+            where: { reservationId },
+            data: { ...data, paymentIntentId: pi.id },
+          });
+          return;
+        }
+
+        // fallback: si jamais tu veux rattacher via paymentIntentId
+        await prisma.depositHold.updateMany({
+          where: { paymentIntentId: pi.id },
+          data,
+        });
+      }
+
       if (event.type === "payment_intent.amount_capturable_updated") {
-        if (reservationId) {
-          await prisma.depositHold.update({
-            where: { reservationId },
-            data: {
-              status: "REQUIRES_CAPTURE",
-              authorizedAt: new Date(),
-              paymentIntentId: pi.id,
-            },
-          });
-        }
-      } else if (event.type === "payment_intent.succeeded") {
-        if (reservationId) {
-          await prisma.depositHold.update({
-            where: { reservationId },
-            data: {
-              status: "CAPTURED",
-              capturedAt: new Date(),
-              paymentIntentId: pi.id,
-            },
-          });
-        }
+        await updateDepositHold({
+          status: "REQUIRES_CAPTURE",
+          authorizedAt: new Date(),
+        });
+      }
+
+      // ⚠️ Avec capture_method="manual", "succeeded" arrive au moment de la CAPTURE,
+      // pas à l'autorisation. Donc ça servira si tu captures plus tard.
+      else if (event.type === "payment_intent.succeeded") {
+        await updateDepositHold({
+          status: "CAPTURED",
+          capturedAt: new Date(),
+        });
       } else if (event.type === "payment_intent.canceled") {
-        if (reservationId) {
-          await prisma.depositHold.update({
-            where: { reservationId },
-            data: {
-              status: "CANCELED",
-              canceledAt: new Date(),
-              paymentIntentId: pi.id,
-            },
-          });
-        }
+        await updateDepositHold({
+          status: "CANCELED",
+          canceledAt: new Date(),
+        });
       } else if (event.type === "payment_intent.payment_failed") {
-        if (reservationId) {
-          await prisma.depositHold.update({
-            where: { reservationId },
-            data: {
-              status: "FAILED",
-              paymentIntentId: pi.id,
-            },
-          });
-        }
+        await updateDepositHold({
+          status: "FAILED",
+        });
       }
 
       return NextResponse.json({ received: true, kind: "deposit" });
@@ -95,7 +111,7 @@ export async function POST(req) {
         // 1) Marquer la réservation payée
         await upsertReservationByPI({
           paymentIntentId: pi.id,
-          status: "PAID",
+          status: "PAID", // ✅ correspond à ton enum ReservationStatus
         });
 
         // 2) ✅ Consommer le gift côté serveur (idempotent)

@@ -1,8 +1,15 @@
 // app/caution/page.jsx
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 import SiteHeader from "../../components/SiteHeader";
 
 function eurFromCents(cents) {
@@ -13,30 +20,129 @@ function eurFromCents(cents) {
   });
 }
 
-function getDepositCentsByChalet(chalet) {
-  if (chalet === "C2") return 30000; // Ty-Koad Duo (spa)
-  if (chalet === "C1") return 15000; // Ty-Koad (cosy)
-  return 0;
-}
+function Checkout({ amountCents, token }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
 
-function getChaletLabel(chalet) {
-  if (chalet === "C2") return "Ty-Koad Duo — spa privatif";
-  if (chalet === "C1") return "Ty-Koad — 2 chambres / 2 SDB";
-  return "Les Chalets Ty-Koad";
+  async function onConfirm() {
+    if (!stripe || !elements) return;
+    setLoading(true);
+    setErr("");
+    setMsg("");
+
+    const returnUrl = `${window.location.origin}/caution?token=${encodeURIComponent(
+      token
+    )}&success=1`;
+
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+      confirmParams: { return_url: returnUrl },
+    });
+
+    if (error) {
+      setErr(error.message || "Erreur lors de la validation.");
+      setLoading(false);
+      return;
+    }
+
+    if (paymentIntent?.status === "requires_capture") {
+      setMsg("Merci ✅ L’empreinte bancaire est enregistrée.");
+    } else if (paymentIntent?.status === "succeeded") {
+      setMsg("Merci ✅ Paiement validé.");
+    } else {
+      setMsg("Merci ✅ Traitement effectué.");
+    }
+
+    setLoading(false);
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 md:p-7 shadow-sm">
+      <div className="text-sm text-stone-700 mb-3">
+        Montant de la caution :{" "}
+        <b className="text-stone-900">{eurFromCents(amountCents)}</b>
+      </div>
+
+      <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 text-[12px] text-stone-600 mb-4">
+        Aucun débit immédiat : il s’agit d’une <b>empreinte bancaire</b> (pré-autorisation).
+        Elle sera libérée après votre départ si tout est conforme.
+      </div>
+
+      <PaymentElement />
+
+      <button
+        onClick={onConfirm}
+        disabled={!stripe || !elements || loading}
+        className="w-full mt-4 inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-medium shadow-sm disabled:bg-stone-200 disabled:text-stone-500 disabled:cursor-not-allowed transition"
+      >
+        {loading ? "Validation en cours…" : "Valider l’empreinte"}
+      </button>
+
+      {msg && <div className="mt-3 text-sm text-emerald-800">{msg}</div>}
+      {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
+    </div>
+  );
 }
 
 function CautionInner() {
   const search = useSearchParams();
-  const chalet = (search.get("chalet") || "").toUpperCase(); // C1 / C2 / ""
+  const token = (search.get("token") || "").trim();
+  const success = search.get("success") === "1";
 
-  const chaletLabel = getChaletLabel(chalet);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [amountCents, setAmountCents] = useState(0);
+  const [alreadyDone, setAlreadyDone] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
 
-  // Montants fixes (affichés même si aucun chalet n'est précisé)
-  const depositC1 = getDepositCentsByChalet("C1");
-  const depositC2 = getDepositCentsByChalet("C2");
+  const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-  // Si on connaît le chalet, on met en avant le bon montant
-  const depositCents = getDepositCentsByChalet(chalet);
+  const stripePromise = useMemo(() => {
+    if (!publishableKey) return null;
+    return loadStripe(publishableKey);
+  }, [publishableKey]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    (async () => {
+      setError("");
+      setClientSecret(null);
+      setAlreadyDone(false);
+
+      const res = await fetch("/api/deposit/create-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError(data.error || "Impossible de préparer la caution.");
+        return;
+      }
+
+      if (data.alreadyDone) {
+        setAlreadyDone(true);
+        setStatus(data.status || "");
+        setAmountCents(Number(data.amountCents || 0));
+        return;
+      }
+
+      if (!data.clientSecret) {
+        setError("Impossible de préparer la caution (clientSecret manquant).");
+        return;
+      }
+
+      setClientSecret(data.clientSecret);
+      setAmountCents(Number(data.amountCents || 0));
+    })();
+  }, [token]);
 
   return (
     <main className="pt-4 sm:pt-6 md:pt-10 pb-12 md:pb-16">
@@ -47,94 +153,68 @@ function CautionInner() {
           </h1>
 
           <p className="mt-2 text-sm sm:text-base text-stone-700">
-            Une caution (dépôt de garantie) peut être demandée afin de couvrir
-            d’éventuelles dégradations, pertes, manquements ou frais de remise en
-            état constatés après votre départ.
+            Cette étape permet d’enregistrer une <b>empreinte bancaire</b> (pré-autorisation).
+            <b> Aucun débit immédiat.</b>
           </p>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 text-xs sm:text-sm">
-            <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
-              <div className="font-medium mb-2">Comment ça fonctionne ?</div>
-              <ul className="list-disc pl-4 space-y-1 text-stone-700">
-                <li>
-                  La caution est effectuée via une{" "}
-                  <b>empreinte bancaire (pré-autorisation)</b>.
-                </li>
-                <li>
-                  <b>Aucune somme n’est débitée</b> si tout est conforme à la
-                  sortie.
-                </li>
-                <li>
-                  En cas de problème, un montant peut être retenu (partiellement
-                  ou totalement) selon les conditions de location.
-                </li>
-              </ul>
+          {!token && (
+            <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-sm text-stone-700">
+              Cette page s’utilise via le lien reçu par e-mail.
             </div>
+          )}
 
-            <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
-              <div className="font-medium mb-2">Montant</div>
+          {token && !publishableKey && (
+            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              Configuration Stripe manquante : <b>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</b>.
+            </div>
+          )}
 
-              {depositCents > 0 ? (
-                <>
-                  <div className="text-stone-700">
-                    Séjour : <b className="text-stone-900">{chaletLabel}</b>
-                  </div>
-                  <div className="mt-1 text-stone-700">
-                    Caution :{" "}
-                    <b className="text-stone-900">
-                      {eurFromCents(depositCents)}
-                    </b>
-                  </div>
-                </>
-              ) : (
-                <div className="text-stone-700 space-y-1">
-                  <div>
-                    <b>Ty-Koad Cosy</b> :{" "}
-                    <b className="text-stone-900">{eurFromCents(depositC1)}</b>
-                  </div>
-                  <div>
-                    <b>Ty-Koad Duo (spa)</b> :{" "}
-                    <b className="text-stone-900">{eurFromCents(depositC2)}</b>
-                  </div>
-                </div>
-              )}
+          {token && error && (
+            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              {error}
             </div>
-          </div>
+          )}
 
-          <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-xs sm:text-sm text-stone-700">
-            <div className="font-medium text-stone-900 mb-1">
-              Quand est-elle demandée ?
+          {token && !error && !alreadyDone && !clientSecret && (
+            <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 text-sm text-stone-700">
+              Préparation de la caution…
             </div>
-            <div>
-              La caution est demandée avant l’arrivée et est libérée après le
-              départ si tout est conforme.
+          )}
+
+          {token && alreadyDone && !error && (
+            <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+              ✅ Caution déjà enregistrée
+              {amountCents ? ` (${eurFromCents(amountCents)})` : ""}.
+              {status ? ` Statut : ${status}.` : ""}
             </div>
-          </div>
+          )}
+
+          {token && clientSecret && !alreadyDone && stripePromise && (
+            <Elements
+              stripe={stripePromise}
+              options={{ clientSecret, locale: "fr" }}
+            >
+              <Checkout amountCents={amountCents} token={token} />
+            </Elements>
+          )}
+
+          {success && (
+            <div className="mt-4 text-sm text-emerald-800">
+              Paiement validé ✅
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap gap-3">
             <a
-              href="/reserver"
-              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-900 text-white text-sm sm:text-base font-medium shadow-sm hover:bg-emerald-800 transition"
+              href="/"
+              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-stone-300 text-sm text-stone-800 hover:border-emerald-500 hover:text-emerald-900 transition"
             >
-              Réserver
-            </a>
-            <a
-              href="/cgv"
-              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-stone-300 text-sm sm:text-base text-stone-800 hover:border-emerald-500 hover:text-emerald-900 transition"
-            >
-              Lire les CGV
-            </a>
-            <a
-              href="/infos-pratiques"
-              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-stone-300 text-sm sm:text-base text-stone-800 hover:border-emerald-500 hover:text-emerald-900 transition"
-            >
-              Infos pratiques
+              Retour à l’accueil
             </a>
           </div>
 
           <p className="mt-4 text-[11px] text-stone-500">
-            Les modalités exactes (délai de libération, cas de retenue, etc.)
-            sont détaillées dans les CGV et/ou les conditions de location.
+            En cas de souci, contactez Hugo & Nina.
           </p>
         </div>
       </section>
@@ -146,8 +226,6 @@ export default function CautionPage() {
   return (
     <>
       <SiteHeader />
-
-      {/* Obligatoire pour useSearchParams */}
       <Suspense
         fallback={
           <main className="pt-4 sm:pt-6 md:pt-10 pb-12 md:pb-16">
