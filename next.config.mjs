@@ -5,8 +5,25 @@ const nextConfig = {
       { protocol: "https", hostname: "upload.wikimedia.org" },
     ],
   },
+
   experimental: {
-    serverComponentsExternalPackages: ["pdfkit"], // ⬅️ important pour la route PDF
+    serverComponentsExternalPackages: ["pdfkit"],
+  },
+
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.chalets-tykoad.fr",
+          },
+        ],
+        destination: "https://chalets-tykoad.fr/:path*",
+        permanent: true,
+      },
+    ];
   },
 };
 
