@@ -3,7 +3,6 @@ import crypto from "crypto";
 import prisma from "../../../../lib/db";
 import { Resend } from "resend";
 import { CHALETS } from "../../../../lib/chalets";
-import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +18,7 @@ function mustEnv(name) {
   return v;
 }
 
-// YYYY-MM-DD en timezone Europe/Paris (fiable pour “arrive demain”)
+// YYYY-MM-DD en timezone Europe/Paris
 function ymdParis(d) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Paris",
@@ -29,27 +28,15 @@ function ymdParis(d) {
   }).format(d);
 }
 
-/**
- * Essaie de récupérer les bonnes valeurs ENUM pour “paid/confirmed”
- * sans faire planter Prisma si tes enums ne s’appellent pas exactement PAID/CONFIRMED.
- */
-function pickActiveStatuses() {
-  const enumValues = Prisma?.ReservationStatus
-    ? Object.values(Prisma.ReservationStatus)
-    : [];
-
-  // On accepte les valeurs qui contiennent PAID ou CONFIRM
-  const picked = enumValues.filter((v) => {
-    const u = String(v).toUpperCase();
-    return u.includes("PAID") || u.includes("CONFIRM");
-  });
-
-  return { enumValues, picked };
-}
+// ✅ STATUTS AUTORISÉS (ton enum Prisma est en MAJUSCULE)
+const ALLOWED_STATUSES = ["PAID", "CONFIRMED"];
 
 export async function GET(req) {
   if (!assertCron(req)) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   try {
@@ -60,24 +47,17 @@ export async function GET(req) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const now = new Date();
-
-    // ✅ on veut “arrive demain” (date Paris)
     const tomorrowKey = ymdParis(new Date(now.getTime() + 24 * 60 * 60 * 1000));
-
-    // On récupère large (jusqu'à 72h) puis on filtre “demain” côté code
     const maxLookahead = new Date(now.getTime() + 72 * 60 * 60 * 1000);
 
-    const { enumValues, picked } = pickActiveStatuses();
-
-    // ✅ Si on trouve des statuts “actifs”, on filtre en DB
-    // ✅ Sinon, on ne met PAS de filtre status (pour éviter le crash)
-    const whereStatus = picked.length ? { in: picked } : undefined;
-
+    // ✅ IMPORTANT : on filtre EN BASE uniquement PAID/CONFIRMED
     const reservations = await prisma.reservation.findMany({
       where: {
         ci: { gte: now, lt: maxLookahead },
         email: { not: null },
-        ...(whereStatus ? { status: whereStatus } : {}),
+        status: { in: ALLOWED_STATUSES },
+        // bonus: si tu veux être ultra strict, exige un PI (paiement ou pseudo PI gratuit)
+        paymentIntentId: { not: null },
       },
       include: { depositHold: true },
       orderBy: { ci: "asc" },
@@ -104,7 +84,7 @@ export async function GET(req) {
       }
 
       const depositEuros =
-        CHALETS?.[r.chalet]?.deposit ?? (r.chalet === "C2" ? 300 : 150);
+        Number(CHALETS?.[r.chalet]?.deposit) || (r.chalet === "C2" ? 300 : 150);
 
       const token = crypto.randomBytes(32).toString("hex");
       const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
@@ -117,6 +97,7 @@ export async function GET(req) {
               amountCents: depositEuros * 100,
               tokenHash,
               tokenExpiresAt,
+              emailSentAt: new Date(),
             },
           })
         : await prisma.depositHold.create({
@@ -125,6 +106,7 @@ export async function GET(req) {
               amountCents: depositEuros * 100,
               tokenHash,
               tokenExpiresAt,
+              emailSentAt: new Date(),
             },
           });
 
@@ -149,11 +131,6 @@ export async function GET(req) {
           .join("\n"),
       });
 
-      await prisma.depositHold.update({
-        where: { id: hold.id },
-        data: { emailSentAt: new Date() },
-      });
-
       sent++;
     }
 
@@ -164,9 +141,7 @@ export async function GET(req) {
       sent,
       skippedNotTomorrow,
       skippedAlreadySent,
-      // utile pour debug (endpoint protégé par CRON_SECRET)
-      statusEnumValues: enumValues,
-      statusPickedForQuery: picked,
+      allowedStatuses: ALLOWED_STATUSES,
     });
   } catch (e) {
     console.error("[deposit-reminders] ERROR:", e);

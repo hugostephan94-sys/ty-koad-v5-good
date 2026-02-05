@@ -1,8 +1,9 @@
 // app/success/page.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SiteHeader from "../../components/SiteHeader";
+import { CHALETS } from "../../lib/chalets";
 
 function useQuery() {
   const [params, setParams] = useState({});
@@ -29,22 +30,31 @@ function toEUR(n) {
 export default function SuccessPage() {
   const q = useQuery();
 
-  // ✅ Plus besoin d'enregistrer la réservation ici :
-  // - create-payment-intent crée la réservation "pending" avec email/prénom
-  // - webhook la passe en paid/failed
-  // - send-confirmation complète/valide au besoin
+  // ✅ On n'enregistre plus rien ici (déjà géré par create-payment-intent + webhook)
   useEffect(() => {}, []);
+
+  const chaletId = ((q.chalet || "") + "").toUpperCase(); // C1 / C2
+  const chaletObj = CHALETS?.[chaletId];
+
+  const chaletLabel = useMemo(() => {
+    if (chaletObj?.name) return chaletObj.name;
+    // fallback si jamais
+    return chaletId === "C2"
+      ? "Ty-Koad Duo — spa privatif"
+      : "Ty-Koad — 2 chambres / 2 SDB";
+  }, [chaletObj, chaletId]);
+
+  const depositAmount = useMemo(() => {
+    // On privilégie CHALETS[id].deposit (en €)
+    const dep = Number(chaletObj?.deposit);
+    if (!isNaN(dep) && dep > 0) return dep;
+
+    // fallback hard si besoin
+    return chaletId === "C2" ? 300 : 150;
+  }, [chaletObj, chaletId]);
 
   const amountText =
     q.amount && !isNaN(Number(q.amount)) ? toEUR(q.amount) : "—";
-
-  const depositAmount =
-    (q.chalet || "").toUpperCase() === "C2" ? 300 : 150;
-
-  const chaletLabel =
-    (q.chalet || "").toUpperCase() === "C2"
-      ? "Ty-Koad Duo — spa privatif"
-      : "Ty-Koad — 2 chambres / 2 SDB";
 
   return (
     <>
