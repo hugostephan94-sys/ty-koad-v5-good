@@ -7,23 +7,9 @@ import Hero from "./Hero";
 import InspirationBlocks from "./InspirationBlocks";
 import GiftBanner from "./GiftBanner";
 import PhotoCarousel from "./PhotoCarousel";
-import GoogleReviewsMini from "./GoogleReviewsMini";
+import GuestReviews from "./GuestReviews";
 
 export default function HomeClient() {
-  const GOOGLE_REVIEWS_URL =
-    "https://maps.app.goo.gl/EsmwduwA4htLuE2N8";
-
-  const googleReviews = [
-    {
-      author: "Nadine Briec",
-      text: "Nina et Hugo sont des hôtes très accueillants et très réactifs…",
-    },
-    {
-      author: "Esther",
-      text: "Super séjour aux chalets Ty Koad à Laz ! Nina et Hugo sont adorables, très…",
-    },
-  ];
-
   const photosDuo = Array.from({ length: 20 }, (_, i) => ({
     src: `/images/chalets/c2/${i + 1}.jpg`,
     alt: `Ty-Koad Duo avec spa privatif — photo ${i + 1}`,
@@ -96,9 +82,11 @@ export default function HomeClient() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-lg">✓</div>
+
                 <div className="font-semibold text-sm text-stone-900">
                   Tarif en direct
                 </div>
+
                 <div className="text-xs text-stone-500 mt-0.5">
                   Sans intermédiaire
                 </div>
@@ -106,9 +94,11 @@ export default function HomeClient() {
 
               <div>
                 <div className="text-lg">🔒</div>
+
                 <div className="font-semibold text-sm text-stone-900">
                   Paiement sécurisé
                 </div>
+
                 <div className="text-xs text-stone-500 mt-0.5">
                   Via Stripe
                 </div>
@@ -116,9 +106,11 @@ export default function HomeClient() {
 
               <div>
                 <div className="text-lg">🔑</div>
+
                 <div className="font-semibold text-sm text-stone-900">
                   Arrivée autonome
                 </div>
+
                 <div className="text-xs text-stone-500 mt-0.5">
                   Boîte à clé
                 </div>
@@ -126,9 +118,11 @@ export default function HomeClient() {
 
               <div>
                 <div className="text-lg">🌿</div>
+
                 <div className="font-semibold text-sm text-stone-900">
                   Au cœur du Finistère
                 </div>
+
                 <div className="text-xs text-stone-500 mt-0.5">
                   À Laz, en Bretagne
                 </div>
@@ -170,22 +164,13 @@ export default function HomeClient() {
           <GiftBanner />
         </div>
 
-        {/* AVIS GOOGLE */}
-        <section
-          className="max-w-6xl mx-auto px-4 animate-fade-in-up"
+        {/* AVIS GOOGLE / BOOKING / AIRBNB */}
+        <div
+          className="animate-fade-in-up"
           style={{ animationDelay: "0.26s" }}
         >
-          <div className="flex justify-center">
-            <div className="w-full max-w-xl">
-              <GoogleReviewsMini
-                rating={5.0}
-                count={3}
-                reviews={googleReviews}
-                googleUrl={GOOGLE_REVIEWS_URL}
-              />
-            </div>
-          </div>
-        </section>
+          <GuestReviews />
+        </div>
 
         {/* LES DEUX CHALETS */}
         <section
@@ -445,7 +430,9 @@ export default function HomeClient() {
           href="/reserver"
           className="flex w-full items-center justify-between rounded-xl bg-emerald-700 px-5 py-3 text-white"
         >
-          <span className="font-semibold">Voir les disponibilités</span>
+          <span className="font-semibold">
+            Voir les disponibilités
+          </span>
 
           <span className="text-sm">
             dès 70 € →
