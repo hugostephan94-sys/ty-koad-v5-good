@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import Hero from "./Hero";
@@ -32,6 +33,52 @@ export default function HomeClient() {
     src: `/images/chalets/c1/${i + 1}.jpg`,
     alt: `Ty-Koad 2 chambres à Laz — photo ${i + 1}`,
   }));
+
+  // FAQ
+  const faq = [
+    {
+      question: "Le spa est-il vraiment privatif ?",
+      answer:
+        "Oui. Le spa du Ty-Koad Duo est entièrement privatif et réservé aux occupants du chalet pendant toute la durée du séjour.",
+    },
+    {
+      question: "Comment se passe l’arrivée ?",
+      answer:
+        "L’arrivée est autonome grâce à une boîte à clé. Les informations nécessaires pour accéder au chalet vous sont communiquées avant votre séjour.",
+    },
+    {
+      question: "La caution est-elle débitée ?",
+      answer:
+        "Non. Il s’agit d’une empreinte bancaire et non d’un débit immédiat. Un lien vous est envoyé avant votre arrivée afin de valider la caution.",
+    },
+    {
+      question: "Les animaux sont-ils acceptés ?",
+      answer:
+        "Oui, les animaux propres et respectueux des lieux sont acceptés. Pour des raisons d’hygiène et de sécurité, ils ne doivent pas accéder au spa.",
+    },
+    {
+      question: "Peut-on commander un petit-déjeuner ?",
+      answer:
+        "Oui. Vous pouvez commander un petit-déjeuner en option. Il est déposé le matin directement sur la table de votre terrasse dans un sac hermétique.",
+    },
+    {
+      question: "Y a-t-il Netflix et Internet ?",
+      answer:
+        "Oui. Les chalets disposent d’un accès Internet ainsi que d’une télévision avec Netflix et Molotov.",
+    },
+    {
+      question: "Quelles sont les heures d’arrivée et de départ ?",
+      answer:
+        "L’arrivée est prévue à partir de 16h et le départ avant 11h. L’accès autonome par boîte à clé vous permet d’arriver tranquillement à l’heure qui vous convient après 16h.",
+    },
+    {
+      question: "Pourquoi réserver directement sur votre site ?",
+      answer:
+        "Vous consultez directement nos disponibilités et nos tarifs, sans intermédiaire. Le paiement est sécurisé via Stripe et votre réservation est confirmée immédiatement.",
+    },
+  ];
+
+  const [openFaq, setOpenFaq] = useState(null);
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -191,6 +238,7 @@ export default function HomeClient() {
                     <div className="text-xs uppercase tracking-wide text-stone-500">
                       À partir de
                     </div>
+
                     <div className="text-2xl font-bold text-emerald-900">
                       110 €
                       <span className="text-sm font-normal text-stone-500">
@@ -296,6 +344,73 @@ export default function HomeClient() {
               </p>
             </div>
           </article>
+        </section>
+
+        {/* QUESTIONS FRÉQUENTES */}
+        <section className="max-w-4xl mx-auto px-4">
+          <div className="text-center mb-7">
+            <div className="inline-flex rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-medium text-emerald-900">
+              Questions fréquentes
+            </div>
+
+            <h2 className="mt-3 text-2xl sm:text-3xl font-bold text-stone-900">
+              Tout ce qu’il faut savoir avant de réserver
+            </h2>
+
+            <p className="mt-2 max-w-2xl mx-auto text-sm sm:text-base text-stone-600">
+              Retrouvez les réponses aux questions les plus fréquentes
+              concernant votre séjour aux Chalets Ty-Koad.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {faq.map((item, index) => {
+              const isOpen = openFaq === index;
+
+              return (
+                <div
+                  key={item.question}
+                  className="rounded-2xl border border-stone-200 bg-white shadow-sm overflow-hidden"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 sm:py-5 text-left hover:bg-stone-50 transition"
+                    aria-expanded={isOpen}
+                  >
+                    <span className="font-semibold text-sm sm:text-base text-stone-900">
+                      {item.question}
+                    </span>
+
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl text-emerald-800 transition-transform ${
+                        isOpen ? "rotate-45" : ""
+                      }`}
+                    >
+                      +
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+                      <p className="pr-8 text-sm sm:text-base leading-relaxed text-stone-600">
+                        {item.answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 text-center">
+            <Link
+              href="/infos-pratiques"
+              className="text-sm font-medium text-emerald-800 hover:text-emerald-950 transition"
+            >
+              Voir toutes les informations pratiques →
+            </Link>
+          </div>
         </section>
 
         {/* DERNIER APPEL À L'ACTION */}
