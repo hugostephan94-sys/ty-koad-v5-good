@@ -1,95 +1,193 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Brand from "./Brand";
 import { Menu, X } from "lucide-react";
 
 const links = [
-  { href: "/nuit", label: "Douce nuit", hover: "hover:text-emerald-800" },
-  { href: "/spa", label: "Spa privatif", hover: "hover:text-rose-700" },
-  { href: "/autour", label: "Autour", hover: "hover:text-sky-700" },
-  { href: "/gourmets", label: "Gourmets", hover: "hover:text-emerald-800" },
+  {
+    href: "/nuit",
+    label: "Nos chalets",
+  },
+  {
+    href: "/spa",
+    label: "Spa privatif",
+  },
+  {
+    href: "/autour",
+    label: "Autour",
+  },
+  {
+    href: "/gourmets",
+    label: "Gourmets",
+  },
   {
     href: "/infos-pratiques",
     label: "Infos pratiques",
-    hover: "hover:text-emerald-800",
   },
-  { href: "/cadeau", label: "Chèque cadeau", hover: "hover:text-rose-700" },
-  { href: "/contact", label: "Contact", hover: "hover:text-sky-700" },
+  {
+    href: "/cadeau",
+    label: "Chèque cadeau",
+  },
+  {
+    href: "/contact",
+    label: "Contact",
+  },
 ];
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   const closeMenu = () => setOpen(false);
+
+  const isActive = (href) => {
+    if (!pathname) return false;
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <header
       id="site-header"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 2147483647,
-      }}
-      className="bg-white/90 backdrop-blur border-b border-emerald-100 shadow-sm"
+      className="fixed inset-x-0 top-0 z-[100] border-b border-emerald-100 bg-white/95 shadow-sm backdrop-blur"
     >
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Brand />
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="h-16 sm:h-[72px] flex items-center justify-between gap-5">
+          {/* LOGO */}
+          <div className="shrink-0">
+            <Brand />
+          </div>
 
-        {/* NAV DESKTOP */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-stone-700">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={l.hover + " transition-colors"}
-            >
-              {l.label}
-            </Link>
-          ))}
-          <Link
-            href="/reserver"
-            className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm text-sm font-medium"
+          {/* NAV DESKTOP */}
+          <nav
+            className="hidden md:flex items-center gap-4 lg:gap-5 text-sm"
+            aria-label="Navigation principale"
           >
-            Réserver
-          </Link>
-        </nav>
+            {links.map((link) => {
+              const active = isActive(link.href);
 
-        {/* BOUTON MOBILE (burger) */}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="md:hidden inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-white/80 px-2.5 py-1.5 text-emerald-900 shadow-sm"
-          aria-label="Ouvrir le menu"
-        >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={[
+                    "relative whitespace-nowrap py-2 transition-colors",
+                    active
+                      ? "font-semibold text-emerald-900"
+                      : "font-medium text-stone-600 hover:text-emerald-800",
+                  ].join(" ")}
+                >
+                  {link.label}
+
+                  {active && (
+                    <span className="absolute inset-x-0 -bottom-[17px] h-0.5 rounded-full bg-emerald-700" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* CTA RÉSERVER */}
+            <Link
+              href="/reserver"
+              className={[
+                "ml-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5",
+                "text-sm font-semibold shadow-sm transition",
+                pathname?.startsWith("/reserver")
+                  ? "bg-emerald-900 text-white"
+                  : "bg-emerald-700 text-white hover:bg-emerald-800 hover:shadow-md",
+              ].join(" ")}
+            >
+              Voir les disponibilités
+            </Link>
+          </nav>
+
+          {/* BOUTON MOBILE */}
+          <button
+            type="button"
+            onClick={() => setOpen((current) => !current)}
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 bg-white text-emerald-900 shadow-sm transition hover:bg-emerald-50"
+            aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+          >
+            {open ? (
+              <X className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <Menu className="h-5 w-5" aria-hidden="true" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* MENU MOBILE */}
       {open && (
-        <nav className="md:hidden border-t border-emerald-100 bg-white/95">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-sm text-stone-800">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={closeMenu}
-                className="py-1.5 flex items-center justify-between"
-              >
-                <span>{l.label}</span>
-              </Link>
-            ))}
+        <nav
+          id="mobile-menu"
+          className="md:hidden border-t border-emerald-100 bg-white"
+          aria-label="Navigation mobile"
+        >
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="flex flex-col">
+              {links.map((link) => {
+                const active = isActive(link.href);
 
-            <div className="pt-2 mt-1 border-t border-stone-100">
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={closeMenu}
+                    className={[
+                      "flex items-center justify-between rounded-xl px-3 py-3 text-sm transition",
+                      active
+                        ? "bg-emerald-50 font-semibold text-emerald-900"
+                        : "font-medium text-stone-700 hover:bg-stone-50 hover:text-emerald-900",
+                    ].join(" ")}
+                  >
+                    <span>{link.label}</span>
+
+                    <span
+                      className={
+                        active
+                          ? "text-emerald-700"
+                          : "text-stone-300"
+                      }
+                      aria-hidden="true"
+                    >
+                      →
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* CTA MOBILE */}
+            <div className="mt-3 border-t border-stone-100 pt-4">
               <Link
                 href="/reserver"
                 onClick={closeMenu}
-                className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-medium shadow-sm"
+                className="inline-flex w-full items-center justify-between rounded-xl bg-emerald-700 px-5 py-3.5 text-white shadow-sm transition hover:bg-emerald-800"
               >
-                Réserver
+                <span className="font-semibold">
+                  Voir les disponibilités
+                </span>
+
+                <span className="text-sm text-emerald-100">
+                  dès 70 € →
+                </span>
+              </Link>
+            </div>
+
+            {/* LIEN CADEAU MOBILE */}
+            <div className="mt-3 text-center">
+              <Link
+                href="/cadeau"
+                onClick={closeMenu}
+                className="text-xs font-medium text-stone-500 hover:text-emerald-800 transition"
+              >
+                🎁 Offrir un séjour aux Chalets Ty-Koad
               </Link>
             </div>
           </div>
