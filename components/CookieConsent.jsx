@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 const CONSENT_KEY = "tykoad_cookie_consent";
 const META_PIXEL_ID = "27812680245025705";
+const OPEN_COOKIE_SETTINGS_EVENT = "tykoad:open-cookie-settings";
 
 export default function CookieConsent() {
   const [consent, setConsent] = useState(null);
@@ -21,20 +22,33 @@ export default function CookieConsent() {
       if (storedConsent === "accepted") {
         setConsent("accepted");
         setShowBanner(false);
-        return;
-      }
-
-      if (storedConsent === "refused") {
+      } else if (storedConsent === "refused") {
         setConsent("refused");
         setShowBanner(false);
-        return;
+      } else {
+        setConsent(null);
+        setShowBanner(true);
       }
-
-      setConsent(null);
-      setShowBanner(true);
     } catch {
       setShowBanner(true);
     }
+
+    // Permet au footer de rouvrir la gestion des cookies
+    function openCookieSettings() {
+      setShowBanner(true);
+    }
+
+    window.addEventListener(
+      OPEN_COOKIE_SETTINGS_EVENT,
+      openCookieSettings
+    );
+
+    return () => {
+      window.removeEventListener(
+        OPEN_COOKIE_SETTINGS_EVENT,
+        openCookieSettings
+      );
+    };
   }, []);
 
   function acceptCookies() {
@@ -44,6 +58,13 @@ export default function CookieConsent() {
 
     setConsent("accepted");
     setShowBanner(false);
+
+    // Si fbq est déjà présent dans la session
+    if (typeof window !== "undefined" && window.fbq) {
+      try {
+        window.fbq("consent", "grant");
+      } catch {}
+    }
   }
 
   function refuseCookies() {
@@ -54,17 +75,11 @@ export default function CookieConsent() {
     setConsent("refused");
     setShowBanner(false);
 
-    // Si Meta était déjà chargé pendant cette session,
-    // on désactive son traitement futur.
     if (typeof window !== "undefined" && window.fbq) {
       try {
         window.fbq("consent", "revoke");
       } catch {}
     }
-  }
-
-  function reopenSettings() {
-    setShowBanner(true);
   }
 
   if (!mounted) {
@@ -78,47 +93,30 @@ export default function CookieConsent() {
           Chargé uniquement après consentement
           ===================================================== */}
       {consent === "accepted" && (
-        <>
-          <Script
-            id="meta-pixel"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-                !function(f,b,e,v,n,t,s)
-                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                n.queue=[];t=b.createElement(e);t.async=!0;
-                t.src=v;s=b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t,s)}(
-                  window,
-                  document,
-                  'script',
-                  'https://connect.facebook.net/en_US/fbevents.js'
-                );
+        <Script
+          id="meta-pixel"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(
+                window,
+                document,
+                'script',
+                'https://connect.facebook.net/en_US/fbevents.js'
+              );
 
-                fbq('consent', 'grant');
-                fbq('init', '${META_PIXEL_ID}');
-                fbq('track', 'PageView');
-              `,
-            }}
-          />
-        </>
-      )}
-
-      {/* =====================================================
-          BOUTON POUR MODIFIER LE CHOIX
-          Toujours accessible
-          ===================================================== */}
-      {!showBanner && (
-        <button
-          type="button"
-          onClick={reopenSettings}
-          className="fixed bottom-3 left-3 z-[70] rounded-full border border-stone-300 bg-white/95 px-3 py-2 text-[11px] font-medium text-stone-700 shadow-md backdrop-blur transition hover:border-emerald-400 hover:text-emerald-900"
-          aria-label="Gérer mes cookies"
-        >
-          Gérer mes cookies
-        </button>
+              fbq('consent', 'grant');
+              fbq('init', '${META_PIXEL_ID}');
+              fbq('track', 'PageView');
+            `,
+          }}
+        />
       )}
 
       {/* =====================================================
@@ -145,14 +143,14 @@ export default function CookieConsent() {
                   </div>
 
                   <p className="mt-3 text-sm leading-relaxed text-stone-600">
-                    Nous utilisons des cookies nécessaires au fonctionnement
+                    Nous utilisons des éléments nécessaires au fonctionnement
                     du site. Avec votre accord, nous utilisons également le
                     Pixel Meta afin de mesurer l’efficacité de nos publicités
                     Facebook et Instagram.
                   </p>
 
                   <p className="mt-2 text-xs leading-relaxed text-stone-500">
-                    Vous pouvez accepter ou refuser ces cookies publicitaires.
+                    Vous pouvez accepter ou refuser ces traceurs publicitaires.
                     Votre choix n’empêche pas d’utiliser le site ni de
                     réserver.
                   </p>
@@ -160,7 +158,7 @@ export default function CookieConsent() {
                   <div className="mt-3">
                     <Link
                       href="/confidentialite"
-                      className="text-xs font-medium text-emerald-800 hover:text-emerald-950 transition"
+                      className="text-xs font-medium text-emerald-800 transition hover:text-emerald-950"
                     >
                       En savoir plus sur les cookies et la confidentialité →
                     </Link>
