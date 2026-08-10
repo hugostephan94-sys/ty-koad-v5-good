@@ -10,10 +10,14 @@ export default function Hero({
   imageAlt = "Ty-Koad Duo — spa privatif",
 }) {
   return (
-    <section className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6 md:pt-8">
+    <section className="max-w-6xl mx-auto px-4">
       {/* PHOTO HERO */}
-      <div className="relative overflow-hidden rounded-3xl border border-stone-200 shadow-sm">
-        <div className="relative h-[300px] sm:h-[380px] md:h-[500px]">
+      <div className="relative overflow-hidden rounded-3xl shadow-sm">
+        {/*
+          Hauteur volontairement plus importante sur mobile.
+          Le texte prend davantage de lignes sur petit écran.
+        */}
+        <div className="relative h-[570px] sm:h-[540px] md:h-[520px]">
           <Image
             src={imageSrc}
             alt={imageAlt}
@@ -23,12 +27,12 @@ export default function Hero({
             className="object-cover"
           />
 
-          {/* Dégradé pour rendre le texte lisible */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+          {/* Dégradé */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/5" />
 
           {/* Badge haut */}
-          <div className="absolute top-4 left-4 sm:top-5 sm:left-5">
-            <div className="inline-flex items-center rounded-full bg-white/95 backdrop-blur px-3 py-1.5 text-xs sm:text-sm font-semibold text-emerald-900 shadow-sm">
+          <div className="absolute top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-auto z-10">
+            <div className="inline-flex items-center rounded-full bg-white/95 backdrop-blur px-3 py-1.5 text-[11px] sm:text-sm font-semibold text-emerald-900 shadow-sm">
               Spa privatif · Centre Finistère
             </div>
           </div>
@@ -36,24 +40,23 @@ export default function Hero({
           {/* Texte sur la photo */}
           <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 md:p-10 text-white">
             <div className="max-w-3xl">
-              <div className="text-xs sm:text-sm font-medium uppercase tracking-[0.16em] text-white/80">
+              <div className="text-[11px] sm:text-sm font-medium uppercase tracking-[0.14em] sm:tracking-[0.16em] text-white/80">
                 Les Chalets Ty-Koad · Laz
               </div>
 
-              <h1 className="mt-2 text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+              <h1 className="mt-2 text-[30px] leading-[1.08] sm:text-4xl md:text-5xl font-bold">
                 Une parenthèse en Bretagne,
                 <span className="block text-emerald-200">
                   avec spa privatif
                 </span>
               </h1>
 
-              <p className="mt-3 max-w-2xl text-sm sm:text-base md:text-lg text-white/90">
-                Deux chalets au calme au cœur du Finistère :
-                une escapade à deux avec spa privatif ou un séjour
-                confortable en famille.
+              <p className="mt-4 max-w-2xl text-sm sm:text-base md:text-lg leading-relaxed text-white/90">
+                Deux chalets au calme au cœur du Finistère : une escapade à
+                deux avec spa privatif ou un séjour confortable en famille.
               </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 {onReserveClick ? (
                   <button
                     onClick={onReserveClick}
@@ -70,9 +73,11 @@ export default function Hero({
                   </Link>
                 )}
 
-                <div className="rounded-xl bg-black/25 backdrop-blur px-4 py-2.5 text-sm">
+                <div className="rounded-xl bg-black/30 backdrop-blur px-4 py-2.5 text-sm">
                   <span className="text-white/75">Dès </span>
-                  <span className="font-bold text-white text-lg">70 €</span>
+                  <span className="font-bold text-white text-lg">
+                    70 €
+                  </span>
                   <span className="text-white/75"> / nuit</span>
                 </div>
               </div>
@@ -112,8 +117,8 @@ export default function Hero({
             <span className="font-medium text-stone-900">
               Ty-Koad
             </span>{" "}
-            avec 2 chambres et 2 salles de bain pour un séjour en famille
-            ou entre amis.
+            avec 2 chambres et 2 salles de bain pour un séjour en famille ou
+            entre amis.
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
