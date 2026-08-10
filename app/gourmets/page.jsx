@@ -2,6 +2,45 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 
+const SITE_URL = "https://chalets-tykoad.fr";
+
+export const metadata = {
+  title: "Petit-déjeuner & plateaux gourmands | Chalets Ty-Koad",
+
+  description:
+    "Commandez un petit-déjeuner ou un plateau gourmand directement pour votre séjour aux Chalets Ty-Koad à Laz : charcuterie, fromage, mixte ou fruits de mer.",
+
+  alternates: {
+    canonical: `${SITE_URL}/gourmets`,
+  },
+
+  openGraph: {
+    title: "Petit-déjeuner & plateaux gourmands | Chalets Ty-Koad",
+    description:
+      "Complétez votre séjour avec un petit-déjeuner ou un plateau gourmand préparé pour deux et livré directement au chalet.",
+    url: `${SITE_URL}/gourmets`,
+    siteName: "Chalets Ty-Koad",
+    images: [
+      {
+        url: `${SITE_URL}/images/plateau-mixte.jpg`,
+        width: 1200,
+        height: 630,
+        alt: "Plateau gourmand des Chalets Ty-Koad",
+      },
+    ],
+    locale: "fr_FR",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Petit-déjeuner & plateaux gourmands | Chalets Ty-Koad",
+    description:
+      "Plateaux gourmands et petits-déjeuners directement au chalet.",
+    images: [`${SITE_URL}/images/plateau-mixte.jpg`],
+  },
+};
+
 function Card({ title, price, note, featured = false }) {
   return (
     <div
@@ -44,27 +83,47 @@ export default function GourmetsPage() {
       <SiteHeader />
 
       <main className="pb-12 pt-4 sm:pt-6 md:pb-16 md:pt-10">
-        {/* INTRODUCTION */}
-        <section className="space-y-6 sm:space-y-8">
-          <header className="max-w-3xl">
+        {/* HERO */}
+        <section className="max-w-6xl mx-auto px-4">
+          <div className="max-w-3xl">
             <div className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-900">
               Les plaisirs gourmands au chalet
             </div>
 
             <h1 className="mt-3 text-2xl font-bold leading-tight text-stone-900 sm:text-3xl md:text-4xl">
-              Gourmets
+              Petit-déjeuner et plateaux gourmands aux Chalets Ty-Koad
             </h1>
 
             <p className="mt-3 text-sm leading-relaxed text-stone-700 sm:text-base">
-              Envie d’un plateau à partager ou d’un{" "}
-              <strong>petit déjeuner</strong> directement au chalet ?
-              Commandez facilement ci-dessous. Après validation de votre
-              demande, vous recevrez un{" "}
-              <strong>lien de paiement sécurisé</strong> par e-mail.
+              Complétez votre séjour avec un{" "}
+              <strong>plateau à partager</strong> ou un{" "}
+              <strong>petit-déjeuner préparé pour vous</strong>, directement
+              au chalet. Commandez simplement en ligne et recevez ensuite
+              votre lien de paiement sécurisé par e-mail.
             </p>
-          </header>
 
-          {/* BLOCS DE COMMANDE */}
+            <div className="mt-5 flex flex-wrap gap-2 text-xs text-stone-600">
+              <span className="rounded-full border border-stone-200 bg-white px-3 py-1.5">
+                ✓ Livraison au chalet
+              </span>
+
+              <span className="rounded-full border border-stone-200 bg-white px-3 py-1.5">
+                ✓ Paiement sécurisé
+              </span>
+
+              <span className="rounded-full border border-stone-200 bg-white px-3 py-1.5">
+                ✓ Commande simple
+              </span>
+
+              <span className="rounded-full border border-stone-200 bg-white px-3 py-1.5">
+                ✓ Préparé pour votre séjour
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* BLOCS DE COMMANDE */}
+        <section className="max-w-6xl mx-auto px-4 mt-8 sm:mt-10">
           <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-10">
             {/* PLATEAUX */}
             <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
@@ -87,7 +146,7 @@ export default function GourmetsPage() {
                   <div className="relative aspect-[4/3] w-full">
                     <Image
                       src="/images/plateau-mixte.jpg"
-                      alt="Plateau mixte de charcuteries et de fromages pour deux personnes"
+                      alt="Plateau mixte de charcuteries et de fromages pour deux personnes aux Chalets Ty-Koad"
                       fill
                       sizes="(max-width: 1024px) 100vw, 50vw"
                       className="object-cover"
@@ -107,8 +166,8 @@ export default function GourmetsPage() {
                         </h3>
 
                         <p className="mt-1 text-sm leading-relaxed text-stone-600">
-                          Un assortiment généreux de charcuteries, fromages et
-                          accompagnements, idéal pour profiter d’un moment
+                          Un assortiment généreux de charcuteries, fromages
+                          et accompagnements, idéal pour profiter d’un moment
                           convivial à deux.
                         </p>
                       </div>
@@ -166,8 +225,8 @@ export default function GourmetsPage() {
                 </div>
 
                 <p className="mt-4 text-xs leading-relaxed text-stone-500">
-                  Les plateaux sont préparés selon une composition définie et
-                  ne sont pas modifiables.
+                  Les plateaux sont préparés selon une composition définie
+                  et ne sont pas modifiables.
                 </p>
 
                 {/* FONCTIONNEMENT */}
@@ -178,8 +237,8 @@ export default function GourmetsPage() {
 
                   <ol className="mt-3 list-inside list-decimal space-y-2 text-stone-700">
                     <li>
-                      Remplissez le formulaire avec le prénom de la réservation,
-                      votre e-mail, la date et votre choix.
+                      Remplissez le formulaire avec le prénom utilisé pour
+                      votre réservation, votre e-mail, la date et votre choix.
                     </li>
 
                     <li>
@@ -188,8 +247,8 @@ export default function GourmetsPage() {
                     </li>
 
                     <li>
-                      Nous préparons votre plateau et le déposons au chalet à
-                      l’heure convenue.
+                      Nous préparons votre plateau et le déposons directement
+                      au chalet à l’heure convenue.
                     </li>
                   </ol>
                 </div>
@@ -221,18 +280,36 @@ export default function GourmetsPage() {
               </div>
 
               <h2 className="mt-2 text-xl font-semibold text-stone-900 sm:text-2xl">
-                Petit déjeuner
+                Petit-déjeuner au chalet
               </h2>
 
               <p className="mt-2 text-sm leading-relaxed text-stone-700">
-                Commencez la journée tranquillement avec un petit déjeuner
-                préparé pour vous et déposé directement au chalet.
+                Commencez la journée tranquillement avec un petit-déjeuner
+                préparé pour vous et déposé directement sur la table de votre
+                terrasse.
               </p>
+
+              {/* PETIT BLOC EXPÉRIENCE */}
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center">
+                  <div className="text-xl">🥐</div>
+                  <div className="mt-2 text-sm font-semibold text-stone-900">
+                    Préparé le matin
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center">
+                  <div className="text-xl">☕</div>
+                  <div className="mt-2 text-sm font-semibold text-stone-900">
+                    Déposé au chalet
+                  </div>
+                </div>
+              </div>
 
               {/* PRÉSENTATION PETIT DÉJEUNER */}
               <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-5">
                 <h3 className="font-semibold text-sky-950">
-                  Composez votre petit déjeuner
+                  Composez votre petit-déjeuner
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-sky-950/80">
@@ -240,7 +317,7 @@ export default function GourmetsPage() {
                   <strong>e-mail</strong>, le{" "}
                   <strong>prénom de la réservation</strong>, la{" "}
                   <strong>date</strong>, l’<strong>heure souhaitée</strong>, le{" "}
-                  <strong>nombre de petits déjeuners</strong> ainsi que vos
+                  <strong>nombre de petits-déjeuners</strong> ainsi que vos
                   préférences.
                 </p>
 
@@ -281,7 +358,7 @@ export default function GourmetsPage() {
                   </li>
 
                   <li>
-                    Votre petit déjeuner est préparé et déposé au chalet à
+                    Votre petit-déjeuner est préparé puis déposé au chalet à
                     l’heure indiquée.
                   </li>
                 </ol>
@@ -295,21 +372,48 @@ export default function GourmetsPage() {
                   rel="noreferrer"
                   className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2 sm:w-auto sm:text-base"
                 >
-                  Commander un petit déjeuner
+                  Commander un petit-déjeuner
                 </a>
               </div>
 
               <p className="mt-3 text-[11px] leading-relaxed text-stone-500 sm:text-xs">
-                Merci de commander <strong>au plus tard la veille</strong> afin
-                de nous permettre de préparer votre petit déjeuner dans les
-                meilleures conditions.
+                Merci de commander <strong>au plus tard la veille</strong>{" "}
+                afin de nous permettre de préparer votre petit-déjeuner dans
+                les meilleures conditions.
               </p>
             </div>
           </div>
         </section>
 
+        {/* IDÉE SÉJOUR */}
+        <section className="max-w-4xl mx-auto px-4 mt-10">
+          <div className="rounded-3xl bg-emerald-950 p-6 sm:p-8 text-white shadow-lg">
+            <div className="text-xs uppercase tracking-[0.18em] text-emerald-200">
+              Une soirée sans sortir
+            </div>
+
+            <h2 className="mt-3 text-2xl sm:text-3xl font-bold">
+              Spa, plateau gourmand et soirée au chalet
+            </h2>
+
+            <p className="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-emerald-50/90">
+              Pour une escapade à deux, profitez du spa privatif puis
+              retrouvez votre plateau directement au chalet. Une façon simple
+              de profiter pleinement de votre soirée sans reprendre la
+              voiture.
+            </p>
+
+            <Link
+              href="/reserver?tab=C2"
+              className="mt-6 inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm sm:text-base font-semibold text-emerald-950 hover:bg-emerald-50 transition"
+            >
+              Voir les disponibilités du Duo
+            </Link>
+          </div>
+        </section>
+
         {/* BLOCS COMPLÉMENTAIRES */}
-        <section className="mt-10 grid gap-6 md:grid-cols-2">
+        <section className="max-w-6xl mx-auto px-4 mt-10 grid gap-6 md:grid-cols-2">
           {/* CHÈQUE CADEAU */}
           <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950 sm:p-6">
             <div className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-900">
@@ -321,7 +425,7 @@ export default function GourmetsPage() {
             </h2>
 
             <p className="mt-2 leading-relaxed">
-              Ajoutez un plateau ou un petit déjeuner à un{" "}
+              Ajoutez un plateau ou un petit-déjeuner à un{" "}
               <strong>chèque cadeau</strong> pour offrir une expérience encore
               plus complète aux Chalets Ty-Koad.
             </p>
@@ -343,12 +447,12 @@ export default function GourmetsPage() {
             </div>
 
             <h2 className="mt-3 text-lg font-semibold text-stone-900">
-              Vous avez déjà réservé ?
+              Vous n’avez pas encore réservé ?
             </h2>
 
             <p className="mt-2 leading-relaxed">
-              Parfait. Vos commandes gourmandes seront associées directement à
-              votre réservation grâce au prénom indiqué dans le formulaire.
+              Commencez par choisir vos dates. Vous pourrez ensuite ajouter
+              vos options gourmandes à votre séjour.
             </p>
 
             <div className="mt-4">
@@ -356,7 +460,7 @@ export default function GourmetsPage() {
                 href="/reserver"
                 className="inline-flex items-center justify-center rounded-xl border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
               >
-                Accéder à la réservation
+                Voir les disponibilités
               </Link>
             </div>
           </div>
