@@ -1,197 +1,115 @@
-"use client";
-import { useRef, useState } from "react";
 import SiteHeader from "../../components/SiteHeader";
+import ContactClient from "../../components/ContactClient";
+
+const SITE_URL = "https://chalets-tykoad.fr";
+
+export const metadata = {
+  title: "Contact & réservation | Chalets Ty-Koad à Laz",
+
+  description:
+    "Contactez les Chalets Ty-Koad à Laz dans le Finistère pour une question sur votre séjour, une réservation, un chèque cadeau ou nos options gourmandes.",
+
+  alternates: {
+    canonical: `${SITE_URL}/contact`,
+  },
+
+  openGraph: {
+    title: "Contact | Chalets Ty-Koad",
+    description:
+      "Une question sur votre séjour aux Chalets Ty-Koad ? Contactez-nous directement pour une réservation, un chèque cadeau ou une demande particulière.",
+    url: `${SITE_URL}/contact`,
+    siteName: "Chalets Ty-Koad",
+    images: [
+      {
+        url: `${SITE_URL}/images/og-tykoad.png`,
+        width: 1200,
+        height: 630,
+        alt: "Chalets Ty-Koad à Laz dans le Finistère",
+      },
+    ],
+    locale: "fr_FR",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact | Chalets Ty-Koad",
+    description:
+      "Contactez-nous pour préparer votre séjour aux Chalets Ty-Koad en Centre Finistère.",
+    images: [`${SITE_URL}/images/og-tykoad.png`],
+  },
+};
 
 export default function ContactPage() {
-  const [loading, setLoading] = useState(false);
-  const [ok, setOk] = useState(false);
-  const [err, setErr] = useState("");
-  const formRef = useRef(null);
-
-  async function onSubmit(e) {
-    e.preventDefault();
-    setErr("");
-    setOk(false);
-
-    const form = formRef.current || e.currentTarget;
-    const fd = new FormData(form);
-    const payload = {
-      name: fd.get("name")?.toString().trim(),
-      email: fd.get("email")?.toString().trim(),
-      phone: fd.get("phone")?.toString().trim(),
-      subject: fd.get("subject")?.toString(),
-      message: fd.get("message")?.toString().trim(),
-      website: fd.get("website")?.toString().trim() || "",
-    };
-
-    if (!payload.name || !payload.email || !payload.message) {
-      setErr("Merci de renseigner nom, e-mail et message.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Erreur serveur");
-      }
-
-      setOk(true);
-      form?.reset();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Erreur inconnue";
-      setErr(message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <>
       <SiteHeader />
 
       <main className="pt-4 sm:pt-6 md:pt-10 pb-12 md:pb-16">
-        <section className="max-w-3xl mx-auto space-y-6">
-          {/* Titre + intro */}
-          <header>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
-              Nous contacter
+        <section className="max-w-5xl mx-auto px-4">
+          {/* HERO */}
+          <header className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900">
+              Une question ? Nous sommes disponibles
+            </div>
+
+            <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-bold leading-tight text-stone-900">
+              Contactez les Chalets Ty-Koad
             </h1>
-            <p className="mt-3 text-sm sm:text-base text-stone-700">
-              Une question sur une réservation, un chèque cadeau, ou les options
-              gourmandes ? Écrivez-nous via ce formulaire — on vous répond
-              rapidement.
+
+            <p className="mt-3 text-sm sm:text-base text-stone-700 leading-relaxed">
+              Une question sur une réservation, nos chalets, le spa privatif,
+              un chèque cadeau ou les options gourmandes ? Envoyez-nous votre
+              demande et nous vous répondrons rapidement.
             </p>
           </header>
 
-          {/* Formulaire */}
-          <form
-            ref={formRef}
-            onSubmit={onSubmit}
-            className="space-y-5 bg-white/95 border border-stone-200 rounded-2xl p-5 sm:p-6 md:p-7 shadow-sm text-sm sm:text-[15px]"
-          >
-            {/* honeypot anti-bot */}
-            <input
-              type="text"
-              name="website"
-              autoComplete="off"
-              className="hidden"
-              tabIndex={-1}
-            />
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-stone-600">
-                  Nom / Prénom *
-                </label>
-                <input
-                  name="name"
-                  required
-                  className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="Votre nom complet"
-                />
+          {/* PETITS ÉLÉMENTS DE RÉASSURANCE */}
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 text-center shadow-sm">
+              <div className="text-xl">✉️</div>
+              <div className="mt-2 text-sm font-semibold text-stone-900">
+                Réponse rapide
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-stone-600">
-                  E-mail *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="vous@email.com"
-                />
-              </div>
-              <div className="md:col-span-2 space-y-1">
-                <label className="text-xs font-medium text-stone-600">
-                  Téléphone (optionnel)
-                </label>
-                <input
-                  name="phone"
-                  className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="06…"
-                />
+              <div className="mt-1 text-xs text-stone-500">
+                Généralement sous 24h
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-stone-600">
-                Sujet
-              </label>
-              <select
-                name="subject"
-                className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              >
-                <option>Question générale</option>
-                <option>Réservation / disponibilité</option>
-                <option>Chèque cadeau</option>
-                <option>Gourmets (plateaux / petit-déjeuner)</option>
-                <option>Autre</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-stone-600">
-                Message *
-              </label>
-              <textarea
-                name="message"
-                required
-                rows={6}
-                className="mt-1 w-full rounded-2xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Détaillez votre demande, vos dates, le chalet souhaité…"
-              />
-              <p className="text-[11px] text-stone-500 mt-1">
-                Les champs marqués d’une * sont obligatoires.
-              </p>
-            </div>
-
-            {err && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-800">
-                {err}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 text-center shadow-sm">
+              <div className="text-xl">📞</div>
+              <div className="mt-2 text-sm font-semibold text-stone-900">
+                Par téléphone
               </div>
-            )}
-
-            {ok && (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-900">
-                Merci ! Votre message est bien envoyé. Nous revenons vers vous
-                rapidement.
+              <div className="mt-1 text-xs text-stone-500">
+                Contact direct
               </div>
-            )}
+            </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex w-full sm:w-auto items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 text-white text-sm sm:text-base font-medium shadow-sm hover:bg-emerald-800 disabled:opacity-70 disabled:cursor-not-allowed transition"
-              >
-                {loading ? "Envoi…" : "Envoyer le message"}
-              </button>
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 text-center shadow-sm">
+              <div className="text-xl">🔑</div>
+              <div className="mt-2 text-sm font-semibold text-stone-900">
+                Réservation directe
+              </div>
+              <div className="mt-1 text-xs text-stone-500">
+                Sur notre site
+              </div>
             </div>
-          </form>
 
-          {/* Infos pratiques + téléphone */}
-          <div className="text-xs sm:text-sm text-stone-600 space-y-1">
-            <div className="font-medium">Infos pratiques</div>
-            <div>
-              Nous répondons en général sous 24h (souvent bien plus vite ✉️).
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 text-center shadow-sm">
+              <div className="text-xl">📍</div>
+              <div className="mt-2 text-sm font-semibold text-stone-900">
+                Laz
+              </div>
+              <div className="mt-1 text-xs text-stone-500">
+                Centre Finistère
+              </div>
             </div>
-            <div>
-              Vous pouvez aussi nous joindre directement au{" "}
-              <a
-                href="tel:0695491124"
-                className="font-semibold text-emerald-800"
-              >
-                06&nbsp;95&nbsp;49&nbsp;11&nbsp;24
-              </a>
-              .
-            </div>
+          </div>
+
+          {/* FORMULAIRE CLIENT */}
+          <div className="mt-8">
+            <ContactClient />
           </div>
         </section>
       </main>
