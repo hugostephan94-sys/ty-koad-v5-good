@@ -46,7 +46,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr">
       <body>
-        {children}
+        {/* 
+          Le header du site est en position fixed.
+          Cet espace évite que le haut des pages passe derrière le header.
+        */}
+        <div className="pt-[76px] md:pt-[78px]">
+          {children}
+        </div>
 
         <SiteFooter />
 
