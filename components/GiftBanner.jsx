@@ -23,12 +23,14 @@ export default function GiftBanner() {
               </span>
               <span>Offrir un séjour</span>
             </div>
+
             <h3 className="mt-1 text-lg sm:text-xl md:text-2xl font-semibold">
               Chèque cadeau — Les Chalets Ty-Koad
             </h3>
+
             <p className="mt-2 text-sm sm:text-[15px] text-stone-600">
               Choisissez le chalet (<strong>Duo spa</strong> ou{" "}
-              <strong>2 chambres</strong>), le montant et les options (
+              <strong>2 chambres</strong>), la formule et les options (
               plateaux, champagne, pétales…).
             </p>
           </div>

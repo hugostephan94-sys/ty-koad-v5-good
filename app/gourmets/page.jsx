@@ -301,7 +301,7 @@ export default function GourmetsPage() {
                 <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center">
                   <div className="text-xl">☕</div>
                   <div className="mt-2 text-sm font-semibold text-stone-900">
-                    Déposé au chalet
+                    Déposé avant 9h
                   </div>
                 </div>
               </div>
@@ -316,9 +316,10 @@ export default function GourmetsPage() {
                   Lors de votre commande, indiquez votre{" "}
                   <strong>e-mail</strong>, le{" "}
                   <strong>prénom de la réservation</strong>, la{" "}
-                  <strong>date</strong>, l’<strong>heure souhaitée</strong>, le{" "}
+                  <strong>date</strong>, le{" "}
                   <strong>nombre de petits-déjeuners</strong> ainsi que vos
-                  préférences.
+                  préférences. Votre petit-déjeuner sera déposé le matin{" "}
+                  <strong>avant 9h</strong> sur la table de votre terrasse.
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -358,8 +359,8 @@ export default function GourmetsPage() {
                   </li>
 
                   <li>
-                    Votre petit-déjeuner est préparé puis déposé au chalet à
-                    l’heure indiquée.
+                    Votre petit-déjeuner est préparé puis déposé le matin{" "}
+                    <strong>avant 9h</strong> sur la table de votre terrasse.
                   </li>
                 </ol>
               </div>

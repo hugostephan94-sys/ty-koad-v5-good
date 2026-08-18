@@ -46,6 +46,11 @@ export async function POST(req) {
         unit_amount: 3000, // 30 €
       },
 
+      fromage: {
+        label: "Plateau fromage",
+        unit_amount: 2800, // 28 €
+      },
+
       mixte: {
         label: "Plateau mixte charcuterie / fromage",
         unit_amount: 3500, // 35 €

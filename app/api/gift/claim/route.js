@@ -119,6 +119,10 @@ export async function POST(req) {
           return "Plateau charcuterie";
         }
 
+        if (k === "fromage") {
+          return "Plateau fromage";
+        }
+
         if (k === "mixte") {
           return "Plateau mixte charcuterie / fromage";
         }

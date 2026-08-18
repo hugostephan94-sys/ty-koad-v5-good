@@ -33,8 +33,15 @@ const EXTRAS = [
     key: "charcuterie",
     label: "Plateau charcuterie",
     description: "À savourer tranquillement au chalet",
-    icon: "🧀",
+    icon: "🥓",
     price: 30,
+  },
+  {
+    key: "fromage",
+    label: "Plateau fromage",
+    description: "Une sélection de fromages à partager",
+    icon: "🧀",
+    price: 28,
   },
   {
     key: "mixte",
