@@ -1,18 +1,10 @@
 // app/api/gift/pdf/route.js
 import PDFDocument from "pdfkit";
 
-export const runtime = "nodejs";          // pas de runtime edge
-export const dynamic = "force-dynamic";   // route 100% dynamique
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-// formatte un montant en centimes -> "110,00 €"
-function eur(cents) {
-  return (cents / 100).toLocaleString("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  });
-}
-
-// on retire les emojis pour éviter les caractères bizarres
+// On retire les emojis pour éviter les caractères bizarres
 function stripEmojis(str) {
   if (!str) return "";
   return str.replace(/[\u{1F000}-\u{1FAFF}]/gu, "");
@@ -22,14 +14,14 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const code        = searchParams.get("code") || "TKO-XXXX-XXXX";
-    const chaletLabel = searchParams.get("chaletLabel") || "Chalets Ty-Koad";
-    const planLabel   = searchParams.get("planLabel") || "Séjour";
-    const amountCents = Number(searchParams.get("amountCents") || "0");
-    const fromName    = searchParams.get("fromName") || "…";
-    const toName      = searchParams.get("toName") || "…";
-    let   message     = searchParams.get("message") || "";
-    const extrasCSV   = searchParams.get("extrasCSV") || "";
+    const code = searchParams.get("code") || "TKO-XXXX-XXXX";
+    const chaletLabel =
+      searchParams.get("chaletLabel") || "Chalets Ty-Koad";
+    const planLabel = searchParams.get("planLabel") || "Séjour";
+    const fromName = searchParams.get("fromName") || "…";
+    const toName = searchParams.get("toName") || "…";
+    let message = searchParams.get("message") || "";
+    const extrasCSV = searchParams.get("extrasCSV") || "";
 
     message = stripEmojis(message);
 
@@ -38,94 +30,148 @@ export async function GET(req) {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const doc = new PDFDocument({ size: "A4", margin: 60 });
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 60,
+    });
 
     const chunks = [];
+
     doc.on("data", (c) => chunks.push(c));
+
     const done = new Promise((resolve, reject) => {
       doc.on("end", resolve);
       doc.on("error", reject);
     });
 
-    const pageWidth    = doc.page.width;
-    const contentX     = 60;                     // marge gauche
-    const contentWidth = pageWidth - 2 * 60;     // zone centrale
+    const pageWidth = doc.page.width;
+    const contentX = 60;
+    const contentWidth = pageWidth - 2 * 60;
 
     /* ───── Fond crème ───── */
+
     doc
       .rect(0, 0, doc.page.width, doc.page.height)
       .fillColor("#fdf8f3")
       .fill();
 
-    doc.fillColor("#374151"); // gris foncé global
+    doc.fillColor("#374151");
 
-    /* ───── Logo centré (pdfkit Node + fetch) ───── */
+    /* ───── Logo centré ───── */
+
     try {
       const { origin } = new URL(req.url);
+
       const baseUrl =
         process.env.NEXT_PUBLIC_SITE_URL ||
         process.env.SITE_URL ||
         origin;
 
-      const resLogo = await fetch(`${baseUrl}/logo-tykoad.png`);
+      const resLogo = await fetch(
+        `${baseUrl}/logo-tykoad.png`
+      );
 
       if (resLogo.ok) {
-        const arrayBuffer = await resLogo.arrayBuffer();
-        const logoBuffer = Buffer.from(arrayBuffer);
+        const arrayBuffer =
+          await resLogo.arrayBuffer();
+
+        const logoBuffer =
+          Buffer.from(arrayBuffer);
+
         const logoWidth = 90;
-        const logoX = (pageWidth - logoWidth) / 2;
+        const logoX =
+          (pageWidth - logoWidth) / 2;
         const logoY = 60;
-        doc.image(logoBuffer, logoX, logoY, { fit: [logoWidth, logoWidth] });
+
+        doc.image(
+          logoBuffer,
+          logoX,
+          logoY,
+          {
+            fit: [
+              logoWidth,
+              logoWidth,
+            ],
+          }
+        );
       } else {
-        console.error("Erreur fetch logo PDF:", resLogo.status);
+        console.error(
+          "Erreur fetch logo PDF:",
+          resLogo.status
+        );
       }
     } catch (e) {
-      console.error("Erreur chargement logo PDF:", e);
+      console.error(
+        "Erreur chargement logo PDF:",
+        e
+      );
     }
 
     let y = 170;
 
     /* ───── Titre principal ───── */
+
     doc
       .font("Helvetica-Bold")
       .fontSize(18)
       .fillColor("#374151")
-      .text("CHÈQUE CADEAU", contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        "CHÈQUE CADEAU",
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 40;
 
     /* ───── Pour / Offert par ───── */
+
     doc
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#4b5563")
-      .text(`Pour : ${toName}`, contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        `Pour : ${toName}`,
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 22;
 
-    doc
-      .text(`Offert par : ${fromName}`, contentX, y, {
+    doc.text(
+      `Offert par : ${fromName}`,
+      contentX,
+      y,
+      {
         align: "center",
         width: contentWidth,
-      });
+      }
+    );
 
     y += 35;
 
-    /* ───── Séjour offert / valeur ───── */
+    /* ───── Séjour offert ───── */
+
     doc
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#374151")
-      .text("Séjour offert :", contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        "Séjour offert :",
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 22;
 
@@ -133,10 +179,15 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#4b5563")
-      .text(planLabel, contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        planLabel,
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 20;
 
@@ -144,12 +195,19 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#4b5563")
-      .text(`Dans le ${chaletLabel}`, contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        `Dans le ${chaletLabel}`,
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 24;
+
+    /* ───── Options offertes ───── */
 
     if (extras.length > 0) {
       doc
@@ -157,7 +215,9 @@ export async function GET(req) {
         .fontSize(11.5)
         .fillColor("#4b5563")
         .text(
-          extras.map((e) => `• ${e}`).join("\n"),
+          extras
+            .map((e) => `• ${e}`)
+            .join("\n"),
           contentX,
           y,
           {
@@ -166,82 +226,111 @@ export async function GET(req) {
           }
         );
 
-      y += 18 * extras.length + 8;
-    }
-
-    if (amountCents > 0) {
-      doc
-        .font("Helvetica-Oblique")
-        .fontSize(11.5)
-        .fillColor("#6b7280")
-        .text(
-          `Valeur du chèque cadeau : ${eur(amountCents)}`,
-          contentX,
-          y,
-          {
-            align: "center",
-            width: contentWidth,
-          }
-        );
-      y += 28;
+      y +=
+        18 * extras.length + 15;
     } else {
       y += 10;
     }
 
-    /* ───── Message personnalisé (optionnel) ───── */
+    /*
+      IMPORTANT :
+      aucun montant n'est affiché sur le PDF.
+      Le bénéficiaire voit uniquement l'expérience offerte.
+    */
+
+    /* ───── Message personnalisé ───── */
+
     if (message) {
-      const boxWidth  = contentWidth;
-      const textWidth = boxWidth - 30;
-      const msg       = `« ${message} »`;
+      const boxWidth =
+        contentWidth;
 
-      const msgHeight = doc.heightOfString(msg, {
-        width: textWidth,
-        align: "center",
-      }) + 20;
+      const textWidth =
+        boxWidth - 30;
 
-      const boxX = contentX;
-      const boxY = y;
+      const msg =
+        `« ${message} »`;
+
+      const msgHeight =
+        doc.heightOfString(
+          msg,
+          {
+            width: textWidth,
+            align: "center",
+          }
+        ) + 20;
+
+      const boxX =
+        contentX;
+
+      const boxY =
+        y;
 
       doc
-        .roundedRect(boxX, boxY, boxWidth, msgHeight, 12)
+        .roundedRect(
+          boxX,
+          boxY,
+          boxWidth,
+          msgHeight,
+          12
+        )
         .fillColor("#fef3c7")
         .strokeColor("#fde68a")
         .lineWidth(1)
         .fillAndStroke();
 
       doc
-        .font("Helvetica-Oblique")
+        .font(
+          "Helvetica-Oblique"
+        )
         .fontSize(11)
         .fillColor("#92400e")
-        .text(msg, boxX + 15, boxY + 10, {
-          width: textWidth,
-          align: "center",
-        });
+        .text(
+          msg,
+          boxX + 15,
+          boxY + 10,
+          {
+            width: textWidth,
+            align: "center",
+          }
+        );
 
-      y += msgHeight + 30;
+      y +=
+        msgHeight + 30;
     }
 
     /* ───── Code cadeau ───── */
+
     doc
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#374151")
-      .text(`Code du chèque cadeau : ${code}`, contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        `Code du chèque cadeau : ${code}`,
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 40;
 
     /* ───── Comment utiliser ce bon ───── */
+
     doc
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#374151")
-      .text("Comment utiliser ce bon", contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        "Comment utiliser ce bon",
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 28;
 
@@ -256,18 +345,25 @@ export async function GET(req) {
       .fontSize(11.5)
       .fillColor("#4b5563")
       .text(
-        instructions.map((s) => `• ${s}`).join("\n"),
+        instructions
+          .map((s) => `• ${s}`)
+          .join("\n"),
         contentX + 20,
         y,
         {
           align: "left",
-          width: contentWidth - 40,
+          width:
+            contentWidth - 40,
         }
       );
 
-    y += instructions.length * 18 + 40;
+    y +=
+      instructions.length *
+        18 +
+      40;
 
     /* ───── Phrase de fin / signature ───── */
+
     doc
       .font("Helvetica")
       .fontSize(11.5)
@@ -285,13 +381,20 @@ export async function GET(req) {
     y += 40;
 
     doc
-      .font("Helvetica-Oblique")
+      .font(
+        "Helvetica-Oblique"
+      )
       .fontSize(11.5)
       .fillColor("#4b5563")
-      .text("Hugo & Nina", contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        "Hugo & Nina",
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
     y += 20;
 
@@ -299,25 +402,45 @@ export async function GET(req) {
       .font("Helvetica")
       .fontSize(10.5)
       .fillColor("#9ca3af")
-      .text("Les Chalets Ty-Koad – Laz", contentX, y, {
-        align: "center",
-        width: contentWidth,
-      });
+      .text(
+        "Les Chalets Ty-Koad – Laz",
+        contentX,
+        y,
+        {
+          align: "center",
+          width: contentWidth,
+        }
+      );
 
-    // Fin du PDF
+    /* ───── Fin du PDF ───── */
+
     doc.end();
+
     await done;
 
-    return new Response(Buffer.concat(chunks), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition":
-          'attachment; filename="cheque-cadeau-tykoad.pdf"',
-      },
-    });
+    return new Response(
+      Buffer.concat(chunks),
+      {
+        status: 200,
+        headers: {
+          "Content-Type":
+            "application/pdf",
+          "Content-Disposition":
+            'attachment; filename="cheque-cadeau-tykoad.pdf"',
+        },
+      }
+    );
   } catch (e) {
-    console.error("PDF error:", e);
-    return new Response(`PDF error: ${e.message}`, { status: 500 });
+    console.error(
+      "PDF error:",
+      e
+    );
+
+    return new Response(
+      `PDF error: ${e.message}`,
+      {
+        status: 500,
+      }
+    );
   }
 }
