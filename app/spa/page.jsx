@@ -85,6 +85,14 @@ export default function SpaPage() {
             </span>
 
             <span className="rounded-full bg-white border border-stone-200 px-3 py-1.5">
+              ✓ Linge & serviettes inclus
+            </span>
+
+            <span className="rounded-full bg-white border border-stone-200 px-3 py-1.5">
+              ✓ Peignoirs fournis
+            </span>
+
+            <span className="rounded-full bg-white border border-stone-200 px-3 py-1.5">
               ✓ Jardin privatif
             </span>
           </div>
@@ -137,6 +145,11 @@ export default function SpaPage() {
                 </li>
 
                 <li>
+                  ✓ <strong>Peignoirs fournis</strong> pour profiter
+                  confortablement de votre espace spa
+                </li>
+
+                <li>
                   ✓ <strong>Usage entièrement privatif</strong> pendant votre
                   séjour
                 </li>
@@ -163,15 +176,16 @@ export default function SpaPage() {
 
                 <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                   <div className="text-xl" aria-hidden="true">
-                    🌙
+                    🧖
                   </div>
 
                   <div className="mt-2 font-medium text-sm text-stone-900">
-                    À profiter en soirée
+                    Peignoirs fournis
                   </div>
 
                   <div className="mt-1 text-xs text-stone-600">
-                    Jets, lumières et tranquillité pour terminer la journée.
+                    Des peignoirs sont à votre disposition pour profiter
+                    pleinement du spa.
                   </div>
                 </div>
 
@@ -188,6 +202,20 @@ export default function SpaPage() {
                     Une escapade romantique au cœur de la Bretagne.
                   </div>
                 </div>
+              </div>
+
+              {/* LINGE INCLUS */}
+              <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-100 text-sm">
+                <div className="font-semibold text-emerald-950">
+                  🧺 Voyagez léger, tout est prévu
+                </div>
+
+                <ul className="mt-2 text-emerald-950/80 space-y-1.5">
+                  <li>✓ Lit king size préparé à votre arrivée</li>
+                  <li>✓ Linge de lit fourni</li>
+                  <li>✓ Serviettes de toilette fournies</li>
+                  <li>✓ Peignoirs fournis pour le spa</li>
+                </ul>
               </div>
 
               {/* BON À SAVOIR */}

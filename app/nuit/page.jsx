@@ -172,6 +172,12 @@ export default function NuitPage() {
                   />
 
                   <Feature
+                    icon="🧺"
+                    title="Linge & peignoirs inclus"
+                    text="Lit préparé, serviettes de toilette et peignoirs pour le spa"
+                  />
+
+                  <Feature
                     icon="📺"
                     title="TV & streaming"
                     text="Netflix et connexion Internet"
@@ -284,6 +290,12 @@ export default function NuitPage() {
                     icon="🚿"
                     title="2 salles d’eau"
                     text="Avec toilettes privatives"
+                  />
+
+                  <Feature
+                    icon="🧺"
+                    title="Linge fourni"
+                    text="Lits préparés et serviettes de toilette incluses"
                   />
 
                   <Feature
@@ -425,6 +437,18 @@ export default function NuitPage() {
                 />
 
                 <ComparisonRow
+                  label="Linge de lit & serviettes"
+                  duo="✓ Inclus"
+                  c1="✓ Inclus"
+                />
+
+                <ComparisonRow
+                  label="Peignoirs"
+                  duo="✓ Inclus pour le spa"
+                  c1="—"
+                />
+
+                <ComparisonRow
                   label="Jardin privatif"
                   duo="✓"
                   c1="✓"
@@ -463,6 +487,8 @@ export default function NuitPage() {
                 "1 chambre",
                 "Spa privatif",
                 "Lit king size 180 × 200",
+                "Lit préparé & serviettes incluses",
+                "Peignoirs fournis pour le spa",
                 "Petit jardin",
                 "Netflix & Internet",
                 "Minimum 1 nuit",
@@ -478,6 +504,7 @@ export default function NuitPage() {
                 "Jusqu’à 4 personnes",
                 "2 chambres",
                 "2 salles d’eau avec WC",
+                "Lits préparés & serviettes incluses",
                 "Cuisine équipée",
                 "Petit jardin",
                 "Netflix & Internet",

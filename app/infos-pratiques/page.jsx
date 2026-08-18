@@ -8,7 +8,7 @@ export const metadata = {
   title: "Infos pratiques séjour | Chalets Ty-Koad Finistère",
 
   description:
-    "Préparez votre séjour aux Chalets Ty-Koad à Laz : arrivée autonome, horaires, équipements, spa privatif, animaux, caution, ménage et options gourmandes.",
+    "Préparez votre séjour aux Chalets Ty-Koad à Laz : arrivée autonome, linge et serviettes fournis, spa privatif, animaux, caution, ménage et options gourmandes.",
 
   alternates: {
     canonical: `${SITE_URL}/infos-pratiques`,
@@ -17,7 +17,7 @@ export const metadata = {
   openGraph: {
     title: "Infos pratiques | Chalets Ty-Koad",
     description:
-      "Toutes les informations utiles pour préparer votre séjour aux Chalets Ty-Koad : arrivée, équipements, spa, caution, animaux et options.",
+      "Toutes les informations utiles pour préparer votre séjour aux Chalets Ty-Koad : arrivée, linge fourni, spa, caution, animaux et options.",
     url: `${SITE_URL}/infos-pratiques`,
     siteName: "Chalets Ty-Koad",
     images: [
@@ -36,7 +36,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Infos pratiques | Chalets Ty-Koad",
     description:
-      "Arrivée, équipements, spa, caution et informations utiles pour votre séjour.",
+      "Arrivée, linge fourni, spa, caution et informations utiles pour votre séjour.",
     images: [`${SITE_URL}/images/og-tykoad.png`],
   },
 };
@@ -60,9 +60,9 @@ export default function InfosPratiquesPage() {
 
             <p className="mt-3 text-sm sm:text-base text-stone-700 max-w-3xl leading-relaxed">
               Retrouvez ici toutes les informations utiles pour préparer
-              sereinement votre arrivée : équipements, horaires, spa,
-              caution, animaux, ménage et options disponibles pendant votre
-              séjour.
+              sereinement votre arrivée : équipements, linge fourni, horaires,
+              spa, caution, animaux, ménage et options disponibles pendant
+              votre séjour.
             </p>
 
             <div className="mt-4">
@@ -190,6 +190,19 @@ export default function InfosPratiquesPage() {
 
               <ul className="mt-4 text-sm text-stone-700 space-y-2">
                 <li>✓ Petit jardin privatif pour chaque chalet</li>
+
+                <li>
+                  ✓ <strong>Linge de lit fourni</strong> dans les deux chalets
+                </li>
+
+                <li>
+                  ✓ <strong>Serviettes de toilette fournies</strong> dans les
+                  deux chalets
+                </li>
+
+                <li>
+                  ✓ Ty-Koad Duo : <strong>peignoirs fournis pour le spa</strong>
+                </li>
 
                 <li>
                   ✓ <strong>Animaux autorisés</strong> s’ils restent propres
@@ -334,6 +347,10 @@ export default function InfosPratiquesPage() {
               <ul className="mt-4 text-sm text-stone-700 space-y-2">
                 <li>
                   ✓ Spa réservé uniquement aux occupants du Ty-Koad Duo
+                </li>
+
+                <li>
+                  ✓ <strong>Peignoirs fournis</strong> pour profiter du spa
                 </li>
 
                 <li>
