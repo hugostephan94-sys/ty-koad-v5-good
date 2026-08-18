@@ -37,6 +37,13 @@ const EXTRAS = [
     price: 30,
   },
   {
+    key: "mixte",
+    label: "Plateau mixte charcuterie / fromage",
+    description: "Un assortiment de charcuteries et de fromages à partager",
+    icon: "🧀",
+    price: 35,
+  },
+  {
     key: "petitdej2",
     label: "Petit déjeuner (2 pers.)",
     description: "Pour prolonger le plaisir au réveil",

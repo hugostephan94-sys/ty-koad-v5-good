@@ -119,6 +119,10 @@ export async function POST(req) {
           return "Plateau charcuterie";
         }
 
+        if (k === "mixte") {
+          return "Plateau mixte charcuterie / fromage";
+        }
+
         if (k === "petitdej2") {
           return "Petit déjeuner (2 pers.)";
         }
@@ -679,7 +683,7 @@ export async function POST(req) {
 
         /* ----------------------------------------------------
            EMAIL BÉNÉFICIAIRE
-           
+
            Si c'est la même adresse que l'acheteur,
            on n'envoie pas un deuxième e-mail.
            ---------------------------------------------------- */
