@@ -2,7 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import ImageCarousel from "../../components/ImageCarousel";
 
-const SITE_URL = "https://chalets-tykoad.fr";
+const SITE_URL = "https://www.chalets-tykoad.fr";
 
 export const metadata = {
   title: "Que faire autour de Laz, Trévarez et Huelgoat | Chalets Ty-Koad",

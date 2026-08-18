@@ -2,10 +2,12 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import PhotoCarousel from "../../components/PhotoCarousel";
 
-const SITE_URL = "https://chalets-tykoad.fr";
+const SITE_URL = "https://www.chalets-tykoad.fr";
 
 export const metadata = {
-  title: "Chalet avec spa privatif pour 2 en Finistère | Ty-Koad Duo",
+  title: {
+    absolute: "Chalet avec spa privatif pour 2 en Finistère | Ty-Koad Duo",
+  },
 
   description:
     "Profitez d’un chalet avec spa privatif pour 2 à Laz, au cœur du Finistère. Jacuzzi privé, lit king size, jardin et séjour détente en Bretagne.",
@@ -42,7 +44,6 @@ export const metadata = {
 };
 
 export default function SpaPage() {
-  // Galerie restreinte aux photos 7, 8, 9, 18, 20 du Duo (c2)
   const spaImages = [7, 8, 9, 18, 20].map((n) => ({
     src: `/images/chalets/c2/${n}.jpg`,
     alt: `Spa privatif du chalet Ty-Koad Duo en Finistère — photo ${n}`,
@@ -141,7 +142,6 @@ export default function SpaPage() {
                 </li>
 
                 <li>✓ Accès rapide depuis le chalet</li>
-
                 <li>✓ Petit jardin privatif attenant</li>
               </ul>
 

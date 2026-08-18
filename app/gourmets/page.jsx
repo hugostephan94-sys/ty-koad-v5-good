@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 
-const SITE_URL = "https://chalets-tykoad.fr";
+const SITE_URL = "https://www.chalets-tykoad.fr";
 
 export const metadata = {
   title: "Petit-déjeuner & plateaux gourmands | Chalets Ty-Koad",

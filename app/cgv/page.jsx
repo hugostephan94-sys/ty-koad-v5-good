@@ -1,7 +1,7 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 
-const SITE_URL = "https://chalets-tykoad.fr";
+const SITE_URL = "https://www.chalets-tykoad.fr";
 
 export const metadata = {
   title: "Conditions Générales de Vente | Chalets Ty-Koad",

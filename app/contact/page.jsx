@@ -1,7 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import ContactClient from "../../components/ContactClient";
 
-const SITE_URL = "https://chalets-tykoad.fr";
+const SITE_URL = "https://www.chalets-tykoad.fr";
 
 export const metadata = {
   title: "Contact & réservation | Chalets Ty-Koad à Laz",

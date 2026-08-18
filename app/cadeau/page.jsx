@@ -1,7 +1,7 @@
 import SiteHeader from "../../components/SiteHeader";
 import CadeauClient from "../../components/CadeauClient";
 
-const SITE_URL = "https://chalets-tykoad.fr";
+const SITE_URL = "https://www.chalets-tykoad.fr";
 
 export const metadata = {
   title: "Chèque cadeau séjour & spa en Finistère | Chalets Ty-Koad",
